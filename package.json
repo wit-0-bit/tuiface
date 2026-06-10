@@ -1,0 +1,37 @@
+{
+  "name": "textface",
+  "author": "Elizardbeth",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {
+    "@rebble/clay": "^1.0.3"
+  },
+  "pebble": {
+    "displayName": "Textface",
+    "uuid": "a4bfc6a1-5c48-431f-b996-03b83f2ca653",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "emery"
+    ],
+    "capabilities": [
+      "location",
+      "health",
+      "configurable"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "WEATHER_TEMP",
+      "WEATHER_COND",
+      "SETTINGS_THEME",
+      "SETTINGS_UNITS",
+      "SETTINGS_DATE_FORMAT"
+    ],
+    "resources": {
+      "media": []
+    }
+  }
+}

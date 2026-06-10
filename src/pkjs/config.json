@@ -1,0 +1,47 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Textface Settings"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "select",
+        "messageKey": "SETTINGS_THEME",
+        "defaultValue": "0",
+        "label": "Theme",
+        "options": [
+          { "label": "Auto (Day/Night)", "value": "0" },
+          { "label": "Day", "value": "1" },
+          { "label": "Night", "value": "2" }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SETTINGS_UNITS",
+        "defaultValue": "0",
+        "label": "Units",
+        "options": [
+          { "label": "Imperial", "value": "0" },
+          { "label": "Metric", "value": "1" }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SETTINGS_DATE_FORMAT",
+        "defaultValue": "0",
+        "label": "Date Format",
+        "options": [
+          { "label": "Weekday + ISO (TUE 2026-06-09)", "value": "0" },
+          { "label": "ISO + Weekday (2026-06-09 TUE)", "value": "1" },
+          { "label": "TUE JUNE 9th, 2026", "value": "2" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
+  }
+]
