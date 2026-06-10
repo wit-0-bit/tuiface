@@ -8,4 +8,4 @@
 - Air Quality Index (AQI) / UV Index
 
 ## Interactions
-- Touch / Tap feature to temporarily display a secondary time zone over the main time
+- Sustained touch / hold on the screen to temporarily display a secondary time zone over the main time (reverts instantly when released)
