@@ -19,10 +19,7 @@ typedef enum {
   DATA_SOURCE_EMPTY
 } ComplicationDataSource;
 
-typedef struct {
-  ComplicationDataSource source;
-  char label[8];
-} SidebarComplicationSlot;
+// Complications now exclusively use ComplicationDataSource
 
 // Forward declaration of data provider
 static void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, int *percent);
@@ -49,8 +46,8 @@ static int s_settings_units = 0;        // 0 = Imperial, 1 = Metric
 static int s_settings_date_format = 0;  // 0 = Weekday + ISO, 1 = ISO + Weekday, 2 = Full Text
 
 // Global settings configurations (can be loaded/saved in future)
-static SidebarComplicationSlot s_left_sidebar = { .source = DATA_SOURCE_STEPS, .label = "STEP" };
-static SidebarComplicationSlot s_right_sidebar = { .source = DATA_SOURCE_BATTERY, .label = "BATT" };
+static ComplicationDataSource s_left_sidebar_source = DATA_SOURCE_STEPS;
+static ComplicationDataSource s_right_sidebar_source = DATA_SOURCE_BATTERY;
 
 typedef struct {
   GColor center_bg;
@@ -119,16 +116,22 @@ static GColor get_source_color(ComplicationDataSource source) {
   }
 }
 
-typedef struct {
-  char name[12];
-  ComplicationDataSource source;
-} ComplicationModule;
-
-static const ComplicationModule s_module_weather = { "WEATHER", DATA_SOURCE_WEATHER };
-static const ComplicationModule s_module_sleep   = { "SLEEP",   DATA_SOURCE_SLEEP };
-static const ComplicationModule s_module_bpm     = { "BPM",     DATA_SOURCE_HEART_RATE };
-static const ComplicationModule s_module_step    = { "STEP",    DATA_SOURCE_STEPS };
-static const ComplicationModule s_module_link    = { "LINK",    DATA_SOURCE_BLUETOOTH };
+static const char* get_source_label(ComplicationDataSource source) {
+  switch (source) {
+    case DATA_SOURCE_BATTERY: return "BATT";
+    case DATA_SOURCE_STEPS: return "STEP";
+    case DATA_SOURCE_SLEEP: return "SLEEP";
+    case DATA_SOURCE_WEATHER_TEMP: return "TEMP";
+    case DATA_SOURCE_WEATHER_COND: return "COND";
+    case DATA_SOURCE_WEATHER: return "WEATHER";
+    case DATA_SOURCE_HEART_RATE: return "BPM";
+    case DATA_SOURCE_DATE: return "DATE";
+    case DATA_SOURCE_DAY_NAME: return "DAY";
+    case DATA_SOURCE_BLUETOOTH: return "LINK";
+    case DATA_SOURCE_ACTIVE_MINUTES: return "ACTV";
+    default: return "";
+  }
+}
 
 
 #define NUM_SLOTS 5
@@ -136,30 +139,15 @@ static const ComplicationModule s_module_link    = { "LINK",    DATA_SOURCE_BLUE
 typedef struct {
   GRect box_rect;
   TextLayer *layer;
-  const ComplicationModule *module;
+  ComplicationDataSource source;
 } ComplicationSlot;
 
 static ComplicationSlot s_complication_slots[NUM_SLOTS] = {
-  {
-    .box_rect = {{10, 8}, {90, 36}},
-    .module = &s_module_weather
-  },
-  {
-    .box_rect = {{100, 8}, {90, 36}},
-    .module = &s_module_sleep
-  },
-  {
-    .box_rect = {{10, 184}, {60, 36}},
-    .module = &s_module_step
-  },
-  {
-    .box_rect = {{70, 184}, {60, 36}},
-    .module = &s_module_bpm
-  },
-  {
-    .box_rect = {{130, 184}, {60, 36}},
-    .module = &s_module_link
-  }
+  { .box_rect = {{10, 8}, {90, 36}}, .source = DATA_SOURCE_WEATHER },     // Top Left
+  { .box_rect = {{100, 8}, {90, 36}}, .source = DATA_SOURCE_SLEEP },      // Top Right
+  { .box_rect = {{10, 184}, {60, 36}}, .source = DATA_SOURCE_STEPS },     // Bottom Left
+  { .box_rect = {{70, 184}, {60, 36}}, .source = DATA_SOURCE_HEART_RATE }, // Bottom Center
+  { .box_rect = {{130, 184}, {60, 36}}, .source = DATA_SOURCE_BLUETOOTH }  // Bottom Right
 };
 
 // Themes moved to top of file
@@ -380,11 +368,13 @@ static void update_health_info() {
 // Drawing & Render Helpers
 // -----------------------------------------------------------------------------
 
-// Draw a vertical progress bar with stacked label overlay
-static void draw_sidebar_complication(GContext *ctx, GRect bounds, SidebarComplicationSlot slot, bool from_top) {
+// Draw a vertical progress bar
+static void draw_sidebar_complication(GContext *ctx, GRect bounds, ComplicationDataSource source, bool from_top) {
+  if (source == DATA_SOURCE_EMPTY) return;
+
   int percent = 0;
   char val_str[16];
-  get_source_data(slot.source, val_str, sizeof(val_str), &percent);
+  get_source_data(source, val_str, sizeof(val_str), &percent);
 
   // Background track (fully black)
   graphics_context_set_fill_color(ctx, s_active_theme->sidebar_bg);
@@ -396,9 +386,9 @@ static void draw_sidebar_complication(GContext *ctx, GRect bounds, SidebarCompli
 
   if (fill_height > 0) {
     GColor fill_color;
-    if (slot.source == DATA_SOURCE_STEPS || slot.source == DATA_SOURCE_ACTIVE_MINUTES) {
+    if (source == DATA_SOURCE_STEPS || source == DATA_SOURCE_ACTIVE_MINUTES) {
       fill_color = s_active_theme->steps_fill;
-    } else if (slot.source == DATA_SOURCE_BATTERY) {
+    } else if (source == DATA_SOURCE_BATTERY) {
       if (percent > 50) fill_color = s_active_theme->battery_fill_high;
       else if (percent > 20) fill_color = s_active_theme->battery_fill_med;
       else fill_color = s_active_theme->battery_fill_low;
@@ -481,10 +471,10 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, GRect(4, 0, bounds.size.w - 8, bounds.size.h), 0, GCornerNone);
 
   // Draw Left Sidebar Progress
-  draw_sidebar_complication(ctx, GRect(0, 0, 4, bounds.size.h), s_left_sidebar, true);
+  draw_sidebar_complication(ctx, GRect(0, 0, 4, bounds.size.h), s_left_sidebar_source, true);
 
   // Draw Right Sidebar Progress
-  draw_sidebar_complication(ctx, GRect(bounds.size.w - 4, 0, 4, bounds.size.h), s_right_sidebar, false);
+  draw_sidebar_complication(ctx, GRect(bounds.size.w - 4, 0, 4, bounds.size.h), s_right_sidebar_source, false);
 
   // Draw TIME and DATE windows
   draw_ascii_window(ctx, GRect(10, 50, 180, 86), "TIME");
@@ -493,8 +483,8 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   // Draw parameterized ASCII windows
   for (int i = 0; i < NUM_SLOTS; i++) {
     ComplicationSlot *slot = &s_complication_slots[i];
-    if (slot->module) {
-      draw_ascii_window(ctx, slot->box_rect, slot->module->name);
+    if (slot->source != DATA_SOURCE_EMPTY) {
+      draw_ascii_window(ctx, slot->box_rect, get_source_label(slot->source));
     }
   }
 }
@@ -509,15 +499,18 @@ static void refresh_complications() {
 
   for (int i = 0; i < NUM_SLOTS; i++) {
     ComplicationSlot *slot = &s_complication_slots[i];
-    if (slot->module && slot->layer) {
-      get_source_data(slot->module->source, s_slot_buffers[i], sizeof(s_slot_buffers[i]), NULL);
+    if (slot->source != DATA_SOURCE_EMPTY && slot->layer) {
+      layer_set_hidden(text_layer_get_layer(slot->layer), false);
+      get_source_data(slot->source, s_slot_buffers[i], sizeof(s_slot_buffers[i]), NULL);
       text_layer_set_text(slot->layer, s_slot_buffers[i]);
 
 #if defined(PBL_COLOR)
-      text_layer_set_text_color(slot->layer, get_source_color(slot->module->source));
+      text_layer_set_text_color(slot->layer, get_source_color(slot->source));
 #else
       text_layer_set_text_color(slot->layer, s_active_theme->text_primary);
 #endif
+    } else if (slot->layer) {
+      layer_set_hidden(text_layer_get_layer(slot->layer), true);
     }
   }
 }
