@@ -234,6 +234,47 @@ void test_get_source_data_should_format_active_minutes(void) {
   TEST_ASSERT_EQUAL_INT(100, percent);
 }
 
+void test_determine_theme_should_handle_all_configurations(void) {
+  // Theme 1 = Day
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(1, 0));
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(1, 12));
+
+  // Theme 2 = Night
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(2, 0));
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(2, 12));
+
+  // Theme 0 = Auto
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 0));  // Midnight
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 5));  // 5 AM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 6));    // 6 AM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 12));   // Noon
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 17));   // 5 PM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 18)); // 6 PM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 23)); // 11 PM
+}
+
+void test_format_date_string_should_handle_all_configurations(void) {
+  char buf[64];
+  struct tm tick_time;
+  memset(&tick_time, 0, sizeof(tick_time));
+  tick_time.tm_mday = 9;
+  tick_time.tm_mon = 5; // June (0-indexed)
+  tick_time.tm_year = 126; // 2026
+  tick_time.tm_wday = 2; // Tuesday
+
+  // Format 0: Weekday + ISO
+  format_date_string(0, &tick_time, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TUE 2026-06-09", buf);
+
+  // Format 1: ISO + Weekday
+  format_date_string(1, &tick_time, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("2026-06-09 TUE", buf);
+
+  // Format 2: Full Text
+  format_date_string(2, &tick_time, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TUE JUNE 9th, 2026", buf);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -248,5 +289,7 @@ int main(void) {
   RUN_TEST(test_get_source_data_should_format_date_and_day);
   RUN_TEST(test_get_source_data_should_format_bluetooth);
   RUN_TEST(test_get_source_data_should_format_active_minutes);
+  RUN_TEST(test_determine_theme_should_handle_all_configurations);
+  RUN_TEST(test_format_date_string_should_handle_all_configurations);
   return UNITY_END();
 }

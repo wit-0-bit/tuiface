@@ -278,21 +278,24 @@ static int tuple_get_int(Tuple *tuple) {
   return tuple->value->int32;
 }
 
+static const WatchTheme* determine_theme(int theme_setting, int current_hour) {
+  if (theme_setting == 1) {
+    return &s_theme_day;
+  } else if (theme_setting == 2) {
+    return &s_theme_night;
+  }
+  // Auto (Day/Night)
+  if (current_hour >= 6 && current_hour < 18) {
+    return &s_theme_day;
+  }
+  return &s_theme_night;
+}
+
 static void apply_theme(void) {
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
 
-  const WatchTheme *new_theme = &s_theme_night;
-  if (s_settings_theme == 1) {
-    new_theme = &s_theme_day;
-  } else if (s_settings_theme == 2) {
-    new_theme = &s_theme_night;
-  } else {
-    // Auto (Day/Night)
-    if (tick_time->tm_hour >= 6 && tick_time->tm_hour < 18) {
-      new_theme = &s_theme_day;
-    }
-  }
+  const WatchTheme *new_theme = determine_theme(s_settings_theme, tick_time->tm_hour);
 
   bool theme_changed = (s_active_theme != new_theme);
   s_active_theme = new_theme;
@@ -579,26 +582,15 @@ static const char* get_ordinal_suffix(int day) {
   return "th";
 }
 
-// Refresh time display
-static void update_time() {
-  apply_theme();
-
-  time_t temp = time(NULL);
-  struct tm *tick_time = localtime(&temp);
-
-  static char s_time_buffer[8];
-  strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
-  text_layer_set_text(s_time_layer, s_time_buffer);
-  
-  static char s_date_iso_buffer[64]; // Increased to 64 to prevent truncation warning
-  if (s_settings_date_format == 0) {
+static void format_date_string(int format_setting, struct tm *tick_time, char *buffer, size_t buf_size) {
+  if (format_setting == 0) {
     // Weekday + ISO (TUE 2026-06-09)
-    strftime(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%a %Y-%m-%d", tick_time);
-    to_upper_str(s_date_iso_buffer);
-  } else if (s_settings_date_format == 1) {
+    strftime(buffer, buf_size, "%a %Y-%m-%d", tick_time);
+    to_upper_str(buffer);
+  } else if (format_setting == 1) {
     // ISO + Weekday (2026-06-09 TUE)
-    strftime(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%Y-%m-%d %a", tick_time);
-    to_upper_str(s_date_iso_buffer);
+    strftime(buffer, buf_size, "%Y-%m-%d %a", tick_time);
+    to_upper_str(buffer);
   } else {
     // Full Text: TUE JUNE 9th, 2026
     char weekday_buf[8];
@@ -613,9 +605,24 @@ static void update_time() {
     to_upper_str(weekday_buf);
     to_upper_str(month_buf);
     
-    snprintf(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%s %s %d%s, %s",
+    snprintf(buffer, buf_size, "%s %s %d%s, %s",
              weekday_buf, month_buf, day, get_ordinal_suffix(day), year_buf);
   }
+}
+
+// Refresh time display
+static void update_time() {
+  apply_theme();
+
+  time_t temp = time(NULL);
+  struct tm *tick_time = localtime(&temp);
+
+  static char s_time_buffer[8];
+  strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
+  text_layer_set_text(s_time_layer, s_time_buffer);
+  
+  static char s_date_iso_buffer[64];
+  format_date_string(s_settings_date_format, tick_time, s_date_iso_buffer, sizeof(s_date_iso_buffer));
   text_layer_set_text(s_date_iso_layer, s_date_iso_buffer);
   
   // Also refresh dynamic dates and sensors
