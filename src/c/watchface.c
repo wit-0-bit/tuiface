@@ -10,6 +10,7 @@ typedef enum {
   DATA_SOURCE_SLEEP,
   DATA_SOURCE_WEATHER_TEMP,
   DATA_SOURCE_WEATHER_COND,
+  DATA_SOURCE_WEATHER,
   DATA_SOURCE_HEART_RATE,
   DATA_SOURCE_DATE,
   DATA_SOURCE_DAY_NAME,
@@ -104,65 +105,30 @@ static const WatchTheme s_theme_day = {
 
 static const WatchTheme *s_active_theme = &s_theme_night;
 
-// Module callback implementations
-static void get_weather_text(char *buffer, size_t len) {
-  char cond_buf[16];
-  char temp_buf[16];
-  get_source_data(DATA_SOURCE_WEATHER_COND, cond_buf, sizeof(cond_buf), NULL);
-  get_source_data(DATA_SOURCE_WEATHER_TEMP, temp_buf, sizeof(temp_buf), NULL);
-  snprintf(buffer, len, "%s / %s", cond_buf, temp_buf);
-}
-
-static GColor get_weather_color(void) {
-  return s_active_theme->text_primary;
-}
-
-static void get_sleep_text(char *buffer, size_t len) {
-  get_source_data(DATA_SOURCE_SLEEP, buffer, len, NULL);
-}
-
-static GColor get_sleep_color(void) {
-  return s_active_theme->text_primary;
-}
-
-static void get_bpm_text(char *buffer, size_t len) {
-  get_source_data(DATA_SOURCE_HEART_RATE, buffer, len, NULL);
-}
-
-static GColor get_bpm_color(void) {
-  if (s_heart_rate <= 0) return s_active_theme->text_primary;
-  if (s_heart_rate > 140) return s_active_theme->status_red;
-  if (s_heart_rate > 100) return s_active_theme->status_yellow;
-  return s_active_theme->status_green;
-}
-
-static void get_step_text(char *buffer, size_t len) {
-  get_source_data(DATA_SOURCE_STEPS, buffer, len, NULL);
-}
-
-static GColor get_step_color(void) {
-  return s_active_theme->text_primary;
-}
-
-static void get_link_text(char *buffer, size_t len) {
-  get_source_data(DATA_SOURCE_BLUETOOTH, buffer, len, NULL);
-}
-
-static GColor get_link_color(void) {
-  return s_connected ? s_active_theme->status_green : s_active_theme->status_red;
+static GColor get_source_color(ComplicationDataSource source) {
+  switch (source) {
+    case DATA_SOURCE_HEART_RATE:
+      if (s_heart_rate <= 0) return s_active_theme->text_primary;
+      if (s_heart_rate > 140) return s_active_theme->status_red;
+      if (s_heart_rate > 100) return s_active_theme->status_yellow;
+      return s_active_theme->status_green;
+    case DATA_SOURCE_BLUETOOTH:
+      return s_connected ? s_active_theme->status_green : s_active_theme->status_red;
+    default:
+      return s_active_theme->text_primary;
+  }
 }
 
 typedef struct {
   char name[12];
-  void (*get_text)(char *buffer, size_t buffer_len);
-  GColor (*get_color)(void);
+  ComplicationDataSource source;
 } ComplicationModule;
 
-static const ComplicationModule s_module_weather = { "WEATHER", get_weather_text, get_weather_color };
-static const ComplicationModule s_module_sleep   = { "SLEEP",   get_sleep_text,   get_sleep_color };
-static const ComplicationModule s_module_bpm     = { "BPM",     get_bpm_text,     get_bpm_color };
-static const ComplicationModule s_module_step    = { "STEP",    get_step_text,    get_step_color };
-static const ComplicationModule s_module_link    = { "LINK",    get_link_text,    get_link_color };
+static const ComplicationModule s_module_weather = { "WEATHER", DATA_SOURCE_WEATHER };
+static const ComplicationModule s_module_sleep   = { "SLEEP",   DATA_SOURCE_SLEEP };
+static const ComplicationModule s_module_bpm     = { "BPM",     DATA_SOURCE_HEART_RATE };
+static const ComplicationModule s_module_step    = { "STEP",    DATA_SOURCE_STEPS };
+static const ComplicationModule s_module_link    = { "LINK",    DATA_SOURCE_BLUETOOTH };
 
 
 #define NUM_SLOTS 5
@@ -266,6 +232,18 @@ static void get_source_data(ComplicationDataSource source, char *val_buf, int va
     case DATA_SOURCE_WEATHER_COND:
       snprintf(val_buf, val_len, "%s", s_weather_cond);
       break;
+    case DATA_SOURCE_WEATHER: {
+      char t_buf[16];
+      char c_buf[16];
+      if (s_weather_temp == -999) {
+        snprintf(t_buf, sizeof(t_buf), "--");
+      } else {
+        snprintf(t_buf, sizeof(t_buf), "%d%s", s_weather_temp, (s_settings_units == 1) ? "C" : "F");
+      }
+      snprintf(c_buf, sizeof(c_buf), "%s", s_weather_cond);
+      snprintf(val_buf, val_len, "%s / %s", c_buf, t_buf);
+      break;
+    }
     case DATA_SOURCE_HEART_RATE:
       if (s_heart_rate > 0) {
         snprintf(val_buf, val_len, "%d", s_heart_rate);
@@ -295,6 +273,55 @@ static void get_source_data(ComplicationDataSource source, char *val_buf, int va
   }
 }
 
+// Helper Functions
+static void to_upper_str(char *str) {
+  for (int i = 0; str[i]; i++) {
+    if (str[i] >= 'a' && str[i] <= 'z') {
+      str[i] -= 32;
+    }
+  }
+}
+
+static int tuple_get_int(Tuple *tuple) {
+  if (!tuple) return 0;
+  if (tuple->type == TUPLE_CSTRING) {
+    return atoi(tuple->value->cstring);
+  }
+  return tuple->value->int32;
+}
+
+static void apply_theme(void) {
+  time_t temp = time(NULL);
+  struct tm *tick_time = localtime(&temp);
+
+  const WatchTheme *new_theme = &s_theme_night;
+  if (s_settings_theme == 1) {
+    new_theme = &s_theme_day;
+  } else if (s_settings_theme == 2) {
+    new_theme = &s_theme_night;
+  } else {
+    // Auto (Day/Night)
+    if (tick_time->tm_hour >= 6 && tick_time->tm_hour < 18) {
+      new_theme = &s_theme_day;
+    }
+  }
+
+  bool theme_changed = (s_active_theme != new_theme);
+  s_active_theme = new_theme;
+  
+  if (s_main_window) {
+    window_set_background_color(s_main_window, s_active_theme->center_bg);
+  }
+  if (theme_changed) {
+    if (s_time_layer) {
+      text_layer_set_text_color(s_time_layer, s_active_theme->text_primary);
+    }
+    if (s_date_iso_layer) {
+      text_layer_set_text_color(s_date_iso_layer, s_active_theme->text_primary);
+    }
+  }
+}
+
 // Update local date information
 static void update_date_info() {
   time_t temp = time(NULL);
@@ -302,11 +329,7 @@ static void update_date_info() {
 
   s_date_day = tick_time->tm_mday;
   strftime(s_day_name, sizeof(s_day_name), "%a", tick_time);
-  for (int i = 0; s_day_name[i]; i++) {
-    if (s_day_name[i] >= 'a' && s_day_name[i] <= 'z') {
-      s_day_name[i] -= 32;
-    }
-  }
+  to_upper_str(s_day_name);
 }
 
 static int s_mock_steps_offset = 0;
@@ -358,7 +381,7 @@ static void update_health_info() {
 // -----------------------------------------------------------------------------
 
 // Draw a vertical progress bar with stacked label overlay
-static void draw_sidebar_complication(GContext *ctx, GRect bounds, SidebarComplicationSlot slot, GColor fill_color, bool from_top) {
+static void draw_sidebar_complication(GContext *ctx, GRect bounds, SidebarComplicationSlot slot, bool from_top) {
   int percent = 0;
   char val_str[16];
   get_source_data(slot.source, val_str, sizeof(val_str), &percent);
@@ -372,6 +395,17 @@ static void draw_sidebar_complication(GContext *ctx, GRect bounds, SidebarCompli
   if (fill_height > bounds.size.h) fill_height = bounds.size.h;
 
   if (fill_height > 0) {
+    GColor fill_color;
+    if (slot.source == DATA_SOURCE_STEPS || slot.source == DATA_SOURCE_ACTIVE_MINUTES) {
+      fill_color = s_active_theme->steps_fill;
+    } else if (slot.source == DATA_SOURCE_BATTERY) {
+      if (percent > 50) fill_color = s_active_theme->battery_fill_high;
+      else if (percent > 20) fill_color = s_active_theme->battery_fill_med;
+      else fill_color = s_active_theme->battery_fill_low;
+    } else {
+      fill_color = s_active_theme->text_secondary;
+    }
+    
     graphics_context_set_fill_color(ctx, fill_color);
     int y_start = from_top ? bounds.origin.y : (bounds.origin.y + bounds.size.h - fill_height);
     graphics_fill_rect(ctx, GRect(bounds.origin.x, y_start, bounds.size.w, fill_height), 0, GCornerNone);
@@ -438,17 +472,6 @@ static void draw_ascii_window(GContext *ctx, GRect rect, const char *title) {
                      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 }
 
-static GColor get_interpolate_color(int percent) {
-#if defined(PBL_COLOR)
-  int r = ((100 - percent) * 255) / 100;
-  int g = (percent * 255) / 100;
-  int b = 0;
-  return GColorFromRGB(r, g, b);
-#else
-  return GColorWhite;
-#endif
-}
-
 // Main canvas rendering (separators and sidebars)
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
@@ -457,13 +480,11 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, s_active_theme->center_bg);
   graphics_fill_rect(ctx, GRect(4, 0, bounds.size.w - 8, bounds.size.h), 0, GCornerNone);
 
-  // Draw Left Sidebar Progress (Steps -> Slate/Gold/Yellow color scheme, width 4)
-  int steps_percent = s_step_goal > 0 ? (s_step_count * 100) / s_step_goal : 0;
-  if (steps_percent > 100) steps_percent = 100;
-  draw_sidebar_complication(ctx, GRect(0, 0, 4, bounds.size.h), s_left_sidebar, get_interpolate_color(steps_percent), true);
+  // Draw Left Sidebar Progress
+  draw_sidebar_complication(ctx, GRect(0, 0, 4, bounds.size.h), s_left_sidebar, true);
 
-  // Draw Right Sidebar Progress (Battery -> Green/Yellow/Red scheme, width 4)
-  draw_sidebar_complication(ctx, GRect(bounds.size.w - 4, 0, 4, bounds.size.h), s_right_sidebar, get_interpolate_color(s_battery_level), false);
+  // Draw Right Sidebar Progress
+  draw_sidebar_complication(ctx, GRect(bounds.size.w - 4, 0, 4, bounds.size.h), s_right_sidebar, false);
 
   // Draw TIME and DATE windows
   draw_ascii_window(ctx, GRect(10, 50, 180, 86), "TIME");
@@ -489,11 +510,11 @@ static void refresh_complications() {
   for (int i = 0; i < NUM_SLOTS; i++) {
     ComplicationSlot *slot = &s_complication_slots[i];
     if (slot->module && slot->layer) {
-      slot->module->get_text(s_slot_buffers[i], sizeof(s_slot_buffers[i]));
+      get_source_data(slot->module->source, s_slot_buffers[i], sizeof(s_slot_buffers[i]), NULL);
       text_layer_set_text(slot->layer, s_slot_buffers[i]);
 
 #if defined(PBL_COLOR)
-      text_layer_set_text_color(slot->layer, slot->module->get_color());
+      text_layer_set_text_color(slot->layer, get_source_color(slot->module->source));
 #else
       text_layer_set_text_color(slot->layer, s_active_theme->text_primary);
 #endif
@@ -522,13 +543,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Settings: Theme
   Tuple *theme_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_THEME);
   if (theme_tuple) {
-    int val = 0;
-    if (theme_tuple->type == TUPLE_CSTRING) {
-      val = atoi(theme_tuple->value->cstring);
-    } else {
-      val = theme_tuple->value->int32;
-    }
-    s_settings_theme = val;
+    s_settings_theme = tuple_get_int(theme_tuple);
     persist_write_int(MESSAGE_KEY_SETTINGS_THEME, s_settings_theme);
   }
 
@@ -536,12 +551,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *units_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_UNITS);
   bool units_changed = false;
   if (units_tuple) {
-    int val = 0;
-    if (units_tuple->type == TUPLE_CSTRING) {
-      val = atoi(units_tuple->value->cstring);
-    } else {
-      val = units_tuple->value->int32;
-    }
+    int val = tuple_get_int(units_tuple);
     if (s_settings_units != val) {
       s_settings_units = val;
       units_changed = true;
@@ -552,13 +562,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Settings: Date Format
   Tuple *date_format_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_DATE_FORMAT);
   if (date_format_tuple) {
-    int val = 0;
-    if (date_format_tuple->type == TUPLE_CSTRING) {
-      val = atoi(date_format_tuple->value->cstring);
-    } else {
-      val = date_format_tuple->value->int32;
-    }
-    s_settings_date_format = val;
+    s_settings_date_format = tuple_get_int(date_format_tuple);
     persist_write_int(MESSAGE_KEY_SETTINGS_DATE_FORMAT, s_settings_date_format);
   }
 
@@ -584,35 +588,10 @@ static const char* get_ordinal_suffix(int day) {
 
 // Refresh time display
 static void update_time() {
+  apply_theme();
+
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
-
-  // Determine active theme based on setting and current hour
-  const WatchTheme *new_theme = &s_theme_night;
-  if (s_settings_theme == 1) {
-    new_theme = &s_theme_day;
-  } else if (s_settings_theme == 2) {
-    new_theme = &s_theme_night;
-  } else {
-    // Auto (Day/Night)
-    if (tick_time->tm_hour >= 6 && tick_time->tm_hour < 18) {
-      new_theme = &s_theme_day;
-    }
-  }
-
-  bool theme_changed = (s_active_theme != new_theme);
-  if (theme_changed) {
-    s_active_theme = new_theme;
-    if (s_main_window) {
-      window_set_background_color(s_main_window, s_active_theme->center_bg);
-    }
-    if (s_time_layer) {
-      text_layer_set_text_color(s_time_layer, s_active_theme->text_primary);
-    }
-    if (s_date_iso_layer) {
-      text_layer_set_text_color(s_date_iso_layer, s_active_theme->text_primary);
-    }
-  }
 
   static char s_time_buffer[8];
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
@@ -622,24 +601,11 @@ static void update_time() {
   if (s_settings_date_format == 0) {
     // Weekday + ISO (TUE 2026-06-09)
     strftime(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%a %Y-%m-%d", tick_time);
-    // Convert day abbreviation to uppercase
-    for (int i = 0; i < 3; i++) {
-      if (s_date_iso_buffer[i] >= 'a' && s_date_iso_buffer[i] <= 'z') {
-        s_date_iso_buffer[i] -= 32;
-      }
-    }
+    to_upper_str(s_date_iso_buffer);
   } else if (s_settings_date_format == 1) {
     // ISO + Weekday (2026-06-09 TUE)
     strftime(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%Y-%m-%d %a", tick_time);
-    // Convert day abbreviation to uppercase
-    int len = strlen(s_date_iso_buffer);
-    if (len >= 3) {
-      for (int i = len - 3; i < len; i++) {
-        if (s_date_iso_buffer[i] >= 'a' && s_date_iso_buffer[i] <= 'z') {
-          s_date_iso_buffer[i] -= 32;
-        }
-      }
-    }
+    to_upper_str(s_date_iso_buffer);
   } else {
     // Full Text: TUE JUNE 9th, 2026
     char weekday_buf[8];
@@ -651,14 +617,8 @@ static void update_time() {
     strftime(month_buf, sizeof(month_buf), "%B", tick_time);
     strftime(year_buf, sizeof(year_buf), "%Y", tick_time);
     
-    // Convert weekday to uppercase
-    for (int i = 0; weekday_buf[i]; i++) {
-      if (weekday_buf[i] >= 'a' && weekday_buf[i] <= 'z') weekday_buf[i] -= 32;
-    }
-    // Convert month to uppercase
-    for (int i = 0; month_buf[i]; i++) {
-      if (month_buf[i] >= 'a' && month_buf[i] <= 'z') month_buf[i] -= 32;
-    }
+    to_upper_str(weekday_buf);
+    to_upper_str(month_buf);
     
     snprintf(s_date_iso_buffer, sizeof(s_date_iso_buffer), "%s %s %d%s, %s",
              weekday_buf, month_buf, day, get_ordinal_suffix(day), year_buf);
@@ -777,24 +737,8 @@ static void init(void) {
     s_settings_date_format = persist_read_int(MESSAGE_KEY_SETTINGS_DATE_FORMAT);
   }
 
-  // Determine active theme initially
-  time_t temp = time(NULL);
-  struct tm *tick_time = localtime(&temp);
-  if (s_settings_theme == 1) {
-    s_active_theme = &s_theme_day;
-  } else if (s_settings_theme == 2) {
-    s_active_theme = &s_theme_night;
-  } else {
-    // Auto (Day/Night)
-    if (tick_time->tm_hour >= 6 && tick_time->tm_hour < 18) {
-      s_active_theme = &s_theme_day;
-    } else {
-      s_active_theme = &s_theme_night;
-    }
-  }
-
   s_main_window = window_create();
-  window_set_background_color(s_main_window, s_active_theme->center_bg);
+  apply_theme();
   window_set_window_handlers(s_main_window, (WindowHandlers) {
     .load = main_window_load,
     .unload = main_window_unload,
