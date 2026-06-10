@@ -130,6 +130,110 @@ void test_get_source_data_should_format_weather(void) {
   TEST_ASSERT_EQUAL_STRING("CLD / 22C", buf);
 }
 
+void test_get_source_data_should_format_sleep(void) {
+  char buf[16];
+  int percent = 0;
+  
+  // No data
+  s_sleep_seconds = -1;
+  get_source_data(DATA_SOURCE_SLEEP, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+  TEST_ASSERT_EQUAL_INT(0, percent);
+
+  // Normal sleep (7h 30m)
+  s_sleep_seconds = (7 * 3600) + (30 * 60);
+  get_source_data(DATA_SOURCE_SLEEP, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("7h 30m", buf);
+  TEST_ASSERT_EQUAL_INT((s_sleep_seconds * 100) / 28800, percent);
+
+  // Over goal
+  s_sleep_seconds = 10 * 3600; // 10 hours
+  get_source_data(DATA_SOURCE_SLEEP, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_INT(100, percent); // capped at 100%
+}
+
+void test_get_source_data_should_format_weather_temp_and_cond(void) {
+  char buf[16];
+  
+  // Temp no data
+  s_weather_temp = -999;
+  get_source_data(DATA_SOURCE_WEATHER_TEMP, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+
+  // Temp Imperial
+  s_settings_units = 0;
+  s_weather_temp = 68;
+  get_source_data(DATA_SOURCE_WEATHER_TEMP, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("68F", buf);
+
+  // Temp Metric
+  s_settings_units = 1;
+  s_weather_temp = 20;
+  get_source_data(DATA_SOURCE_WEATHER_TEMP, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("20C", buf);
+
+  // Cond
+  strcpy(s_weather_cond, "RAIN");
+  get_source_data(DATA_SOURCE_WEATHER_COND, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("RAIN", buf);
+}
+
+void test_get_source_data_should_format_heart_rate(void) {
+  char buf[16];
+
+  s_heart_rate = 0;
+  get_source_data(DATA_SOURCE_HEART_RATE, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+
+  s_heart_rate = 120;
+  get_source_data(DATA_SOURCE_HEART_RATE, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("120", buf);
+}
+
+void test_get_source_data_should_format_date_and_day(void) {
+  char buf[16];
+
+  s_date_day = 15;
+  get_source_data(DATA_SOURCE_DATE, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("15", buf);
+
+  strcpy(s_day_name, "FRI");
+  get_source_data(DATA_SOURCE_DAY_NAME, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("FRI", buf);
+}
+
+void test_get_source_data_should_format_bluetooth(void) {
+  char buf[16];
+  int percent = 0;
+
+  s_connected = true;
+  get_source_data(DATA_SOURCE_BLUETOOTH, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("OK", buf);
+  TEST_ASSERT_EQUAL_INT(100, percent);
+
+  s_connected = false;
+  get_source_data(DATA_SOURCE_BLUETOOTH, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("LOSS", buf);
+  TEST_ASSERT_EQUAL_INT(0, percent);
+}
+
+void test_get_source_data_should_format_active_minutes(void) {
+  char buf[16];
+  int percent = 0;
+  
+  s_active_minutes_goal = 30;
+  
+  s_active_minutes = 15;
+  get_source_data(DATA_SOURCE_ACTIVE_MINUTES, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("15m", buf);
+  TEST_ASSERT_EQUAL_INT(50, percent);
+
+  s_active_minutes = 45;
+  get_source_data(DATA_SOURCE_ACTIVE_MINUTES, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("45m", buf);
+  TEST_ASSERT_EQUAL_INT(100, percent);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -138,5 +242,11 @@ int main(void) {
   RUN_TEST(test_get_source_data_should_format_battery);
   RUN_TEST(test_get_source_data_should_format_steps);
   RUN_TEST(test_get_source_data_should_format_weather);
+  RUN_TEST(test_get_source_data_should_format_sleep);
+  RUN_TEST(test_get_source_data_should_format_weather_temp_and_cond);
+  RUN_TEST(test_get_source_data_should_format_heart_rate);
+  RUN_TEST(test_get_source_data_should_format_date_and_day);
+  RUN_TEST(test_get_source_data_should_format_bluetooth);
+  RUN_TEST(test_get_source_data_should_format_active_minutes);
   return UNITY_END();
 }
