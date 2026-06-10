@@ -12,9 +12,18 @@
         "defaultValue": "0",
         "label": "Theme",
         "options": [
-          { "label": "Auto (Day/Night)", "value": "0" },
-          { "label": "Day", "value": "1" },
-          { "label": "Night", "value": "2" }
+          {
+            "label": "Auto (Day/Night)",
+            "value": "0"
+          },
+          {
+            "label": "Day",
+            "value": "1"
+          },
+          {
+            "label": "Night",
+            "value": "2"
+          }
         ]
       },
       {
@@ -23,8 +32,14 @@
         "defaultValue": "0",
         "label": "Units",
         "options": [
-          { "label": "Imperial", "value": "0" },
-          { "label": "Metric", "value": "1" }
+          {
+            "label": "Imperial",
+            "value": "0"
+          },
+          {
+            "label": "Metric",
+            "value": "1"
+          }
         ]
       },
       {
@@ -33,9 +48,243 @@
         "defaultValue": "0",
         "label": "Date Format",
         "options": [
-          { "label": "Weekday + ISO (TUE 2026-06-09)", "value": "0" },
-          { "label": "ISO + Weekday (2026-06-09 TUE)", "value": "1" },
-          { "label": "TUE JUNE 9th, 2026", "value": "2" }
+          {
+            "label": "Weekday + ISO (TUE 2026-06-09)",
+            "value": "0"
+          },
+          {
+            "label": "ISO + Weekday (2026-06-09 TUE)",
+            "value": "1"
+          },
+          {
+            "label": "TUE JUNE 9th, 2026",
+            "value": "2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Layout Settings"
+      },
+      {
+        "type": "select",
+        "messageKey": "SLOT_1",
+        "defaultValue": "5",
+        "label": "Top Left Slot",
+        "options": [
+          {
+            "label": "Empty",
+            "value": "20"
+          },
+          {
+            "label": "Steps",
+            "value": "1"
+          },
+          {
+            "label": "Sleep",
+            "value": "2"
+          },
+          {
+            "label": "Weather",
+            "value": "5"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "6"
+          },
+          {
+            "label": "Bluetooth Status",
+            "value": "9"
+          },
+          {
+            "label": "Active Minutes",
+            "value": "10"
+          },
+          {
+            "label": "Air Quality (AQI)",
+            "value": "16"
+          },
+          {
+            "label": "UV Index",
+            "value": "17"
+          },
+          {
+            "label": "AQI / UV Index",
+            "value": "18"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SLOT_2",
+        "defaultValue": "2",
+        "label": "Top Right Slot",
+        "options": [
+          {
+            "label": "Empty",
+            "value": "20"
+          },
+          {
+            "label": "Steps",
+            "value": "1"
+          },
+          {
+            "label": "Sleep",
+            "value": "2"
+          },
+          {
+            "label": "Weather",
+            "value": "5"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "6"
+          },
+          {
+            "label": "Bluetooth Status",
+            "value": "9"
+          },
+          {
+            "label": "Active Minutes",
+            "value": "10"
+          },
+          {
+            "label": "Air Quality (AQI)",
+            "value": "16"
+          },
+          {
+            "label": "UV Index",
+            "value": "17"
+          },
+          {
+            "label": "AQI / UV Index",
+            "value": "18"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SLOT_3",
+        "defaultValue": "1",
+        "label": "Bottom Left Slot",
+        "options": [
+          {
+            "label": "Empty",
+            "value": "20"
+          },
+          {
+            "label": "Steps",
+            "value": "1"
+          },
+          {
+            "label": "Sleep",
+            "value": "2"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "6"
+          },
+          {
+            "label": "Bluetooth Status",
+            "value": "9"
+          },
+          {
+            "label": "Active Minutes",
+            "value": "10"
+          },
+          {
+            "label": "Air Quality (AQI)",
+            "value": "16"
+          },
+          {
+            "label": "UV Index",
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SLOT_4",
+        "defaultValue": "6",
+        "label": "Bottom Center Slot",
+        "options": [
+          {
+            "label": "Empty",
+            "value": "20"
+          },
+          {
+            "label": "Steps",
+            "value": "1"
+          },
+          {
+            "label": "Sleep",
+            "value": "2"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "6"
+          },
+          {
+            "label": "Bluetooth Status",
+            "value": "9"
+          },
+          {
+            "label": "Active Minutes",
+            "value": "10"
+          },
+          {
+            "label": "Air Quality (AQI)",
+            "value": "16"
+          },
+          {
+            "label": "UV Index",
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "SLOT_5",
+        "defaultValue": "9",
+        "label": "Bottom Right Slot",
+        "options": [
+          {
+            "label": "Empty",
+            "value": "20"
+          },
+          {
+            "label": "Steps",
+            "value": "1"
+          },
+          {
+            "label": "Sleep",
+            "value": "2"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "6"
+          },
+          {
+            "label": "Bluetooth Status",
+            "value": "9"
+          },
+          {
+            "label": "Active Minutes",
+            "value": "10"
+          },
+          {
+            "label": "Air Quality (AQI)",
+            "value": "16"
+          },
+          {
+            "label": "UV Index",
+            "value": "17"
+          }
         ]
       }
     ]

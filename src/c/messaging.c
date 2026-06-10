@@ -1,0 +1,101 @@
+#include <pebble.h>
+#include "messaging.h"
+#include "data.h"
+#include "main.h"
+#include "drawing.h"
+
+void request_weather() {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  if (iter == NULL) return;
+  
+  dict_write_uint8(iter, MESSAGE_KEY_WEATHER_TEMP, 0); // Trigger fetch
+  app_message_outbox_send();
+}
+
+void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  // Weather
+  Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_TEMP);
+  Tuple *cond_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_COND);
+  if (temp_tuple && cond_tuple) {
+    s_weather_temp = temp_tuple->value->int32;
+    snprintf(s_weather_cond, sizeof(s_weather_cond), "%s", cond_tuple->value->cstring);
+  }
+
+  Tuple *aqi_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_AQI);
+  if (aqi_tuple) {
+    s_weather_aqi = aqi_tuple->value->int32;
+  }
+
+  Tuple *uv_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_UV);
+  if (uv_tuple) {
+    s_weather_uv = uv_tuple->value->int32;
+  }
+
+  // Settings: Theme
+  Tuple *theme_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_THEME);
+  if (theme_tuple) {
+    s_settings_theme = tuple_get_int(theme_tuple);
+    persist_write_int(MESSAGE_KEY_SETTINGS_THEME, s_settings_theme);
+  }
+
+  Tuple *units_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_UNITS);
+  bool units_changed = false;
+  if (units_tuple) {
+    int val = tuple_get_int(units_tuple);
+    if (s_settings_units != val) {
+      s_settings_units = val;
+      units_changed = true;
+    }
+    persist_write_int(MESSAGE_KEY_SETTINGS_UNITS, s_settings_units);
+  }
+
+  Tuple *date_format_tuple = dict_find(iterator, MESSAGE_KEY_SETTINGS_DATE_FORMAT);
+  if (date_format_tuple) {
+    s_settings_date_format = tuple_get_int(date_format_tuple);
+    persist_write_int(MESSAGE_KEY_SETTINGS_DATE_FORMAT, s_settings_date_format);
+  }
+
+  Tuple *slot1 = dict_find(iterator, MESSAGE_KEY_SLOT_1);
+  if (slot1) {
+    s_complication_slots[0].source = tuple_get_int(slot1);
+    persist_write_int(MESSAGE_KEY_SLOT_1, s_complication_slots[0].source);
+  }
+  
+  Tuple *slot2 = dict_find(iterator, MESSAGE_KEY_SLOT_2);
+  if (slot2) {
+    s_complication_slots[1].source = tuple_get_int(slot2);
+    persist_write_int(MESSAGE_KEY_SLOT_2, s_complication_slots[1].source);
+  }
+
+  Tuple *slot3 = dict_find(iterator, MESSAGE_KEY_SLOT_3);
+  if (slot3) {
+    s_complication_slots[2].source = tuple_get_int(slot3);
+    persist_write_int(MESSAGE_KEY_SLOT_3, s_complication_slots[2].source);
+  }
+
+  Tuple *slot4 = dict_find(iterator, MESSAGE_KEY_SLOT_4);
+  if (slot4) {
+    s_complication_slots[3].source = tuple_get_int(slot4);
+    persist_write_int(MESSAGE_KEY_SLOT_4, s_complication_slots[3].source);
+  }
+
+  Tuple *slot5 = dict_find(iterator, MESSAGE_KEY_SLOT_5);
+  if (slot5) {
+    s_complication_slots[4].source = tuple_get_int(slot5);
+    persist_write_int(MESSAGE_KEY_SLOT_5, s_complication_slots[4].source);
+  }
+
+  // If units changed, request new weather immediately to fetch correct unit
+  if (units_changed) {
+    request_weather();
+  }
+
+  // Redraw UI with new settings/weather
+  update_time();
+  if (s_canvas_layer) layer_mark_dirty(s_canvas_layer);
+}
+
+void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}

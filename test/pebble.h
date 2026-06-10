@@ -38,6 +38,10 @@ typedef uint32_t GColor;
 #define GColorDarkGreen 10
 #define GColorRed 11
 #define GColorIslamicGreen 12
+#define GColorBlue 13
+#define GColorKellyGreen 14
+#define GColorGreen 15
+#define GColorYellow 16
 static inline GColor GColorFromRGB(int r, int g, int b) { return (GColor)0; }
 
 typedef enum {
@@ -57,8 +61,11 @@ typedef enum {
 } GTextAlignment;
 
 typedef const void* GFont;
-#define FONT_KEY_GOTHIC_14_BOLD "font"
-#define FONT_KEY_GOTHIC_18_BOLD "font"
+typedef int32_t HealthValue;
+
+#define FONT_KEY_GOTHIC_14_BOLD "FONT_KEY_GOTHIC_14_BOLD"
+#define FONT_KEY_GOTHIC_18_BOLD "FONT_KEY_GOTHIC_18_BOLD"
+#define FONT_KEY_ROBOTO_BOLD_SUBSET_49 "FONT_KEY_ROBOTO_BOLD_SUBSET_49"
 #define FONT_KEY_LECO_60_NUMBERS_AM_PM "font"
 
 typedef enum {
@@ -171,6 +178,19 @@ typedef struct {
 #define MESSAGE_KEY_SETTINGS_THEME 102
 #define MESSAGE_KEY_SETTINGS_UNITS 103
 #define MESSAGE_KEY_SETTINGS_DATE_FORMAT 104
+#define MESSAGE_KEY_WEATHER_SUNRISE 105
+#define MESSAGE_KEY_WEATHER_SUNSET 106
+#define MESSAGE_KEY_WEATHER_HIGH 107
+#define MESSAGE_KEY_WEATHER_LOW 108
+#define MESSAGE_KEY_WEATHER_AQI 109
+#define MESSAGE_KEY_WEATHER_UV 110
+#define MESSAGE_KEY_SIDEBAR_POSITION 111
+#define MESSAGE_KEY_SLOT_1 112
+#define MESSAGE_KEY_SLOT_2 113
+#define MESSAGE_KEY_SLOT_3 114
+#define MESSAGE_KEY_SLOT_4 115
+#define MESSAGE_KEY_SLOT_5 116
+#define MESSAGE_KEY_UTC_OFFSET 117
 
 // --- Function Prototypes ---
 void app_event_loop(void);

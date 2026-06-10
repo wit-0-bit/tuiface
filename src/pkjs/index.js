@@ -28,7 +28,7 @@ function getWeather() {
       var units = settings['SETTINGS_UNITS'] || '0';
       var tempUnit = (units === '1' || units === 1) ? 'celsius' : 'fahrenheit';
 
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&temperature_unit=' + tempUnit;
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&timezone=auto&temperature_unit=' + tempUnit + '&daily=uv_index_max';
 
       var xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -37,8 +37,11 @@ function getWeather() {
             var json = JSON.parse(this.responseText);
             var temp = Math.round(json.current_weather.temperature);
             var code = json.current_weather.weathercode;
+            var uv = 0;
+            if (json.daily && json.daily.uv_index_max && json.daily.uv_index_max.length > 0) {
+              uv = Math.round(json.daily.uv_index_max[0]);
+            }
             
-            // Map WMO weather codes to simple strings (SUN, CLD, FOG, RAIN, SNOW, TSTM)
             var cond = "SUN";
             if (code === 0) {
               cond = "SUN";
@@ -56,15 +59,48 @@ function getWeather() {
               cond = "CLD";
             }
 
-            var dict = {
-              'WEATHER_TEMP': temp,
-              'WEATHER_COND': cond
+            // Fetch AQI from Air Quality API
+            var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi';
+            var aqiXhr = new XMLHttpRequest();
+            aqiXhr.onload = function() {
+              var aqi = 0;
+              if (aqiXhr.status === 200) {
+                try {
+                  var aqiJson = JSON.parse(this.responseText);
+                  if (aqiJson.current && aqiJson.current.us_aqi !== undefined) {
+                    aqi = Math.round(aqiJson.current.us_aqi);
+                  }
+                } catch(e) {
+                  console.log('Error parsing AQI: ' + e);
+                }
+              }
+              
+              var dict = {
+                'WEATHER_TEMP': temp,
+                'WEATHER_COND': cond,
+                'WEATHER_AQI': aqi,
+                'WEATHER_UV': uv
+              };
+              Pebble.sendAppMessage(dict,
+                function(e) { console.log('Weather, AQI & UV sent successfully!'); },
+                function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
+              );
             };
+            aqiXhr.onerror = function() {
+              var dict = {
+                'WEATHER_TEMP': temp,
+                'WEATHER_COND': cond,
+                'WEATHER_AQI': 0,
+                'WEATHER_UV': uv
+              };
+              Pebble.sendAppMessage(dict,
+                function(e) { console.log('Weather & UV sent successfully (no AQI)!'); },
+                function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
+              );
+            };
+            aqiXhr.open('GET', aqiUrl);
+            aqiXhr.send();
 
-            Pebble.sendAppMessage(dict,
-              function(e) { console.log('Weather sent successfully!'); },
-              function(e) { console.log('Error sending weather: ' + JSON.stringify(e)); }
-            );
           } catch(e) {
             console.log('Error parsing weather JSON: ' + e);
           }

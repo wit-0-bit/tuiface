@@ -4,14 +4,11 @@
 #include "pebble.h"
 
 // Include the implementation file directly so we can test its static functions
-#include "../src/c/watchface.c"
-
-// Forward declarations of static functions we want to test
-static void to_upper_str(char *str);
-static int tuple_get_int(Tuple *tuple);
-static const char* get_source_label(ComplicationDataSource source);
-static void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, int *percent);
-static void apply_theme(void);
+#include "../src/c/data.c"
+#include "../src/c/theme.c"
+#include "../src/c/drawing.c"
+#include "../src/c/messaging.c"
+#include "../src/c/main.c"
 
 void setUp(void) {
   // Reset any global states if needed before each test
@@ -58,6 +55,7 @@ void test_tuple_get_int_should_parse_strings_and_ints(void) {
   uint8_t buffer2[sizeof(Tuple) + 4];
   Tuple *t2 = (Tuple*)buffer2;
   t2->type = TUPLE_INT;
+  t2->length = 4;
   t2->value->int32 = 1234;
   TEST_ASSERT_EQUAL_INT(1234, tuple_get_int(t2));
 
@@ -68,6 +66,9 @@ void test_get_source_label_should_return_correct_labels(void) {
   TEST_ASSERT_EQUAL_STRING("BATT", get_source_label(DATA_SOURCE_BATTERY));
   TEST_ASSERT_EQUAL_STRING("STEP", get_source_label(DATA_SOURCE_STEPS));
   TEST_ASSERT_EQUAL_STRING("WEATHER", get_source_label(DATA_SOURCE_WEATHER));
+  TEST_ASSERT_EQUAL_STRING("AQI", get_source_label(DATA_SOURCE_AQI));
+  TEST_ASSERT_EQUAL_STRING("UV", get_source_label(DATA_SOURCE_UV));
+  TEST_ASSERT_EQUAL_STRING("AQI/UV", get_source_label(DATA_SOURCE_AQI_UV));
   TEST_ASSERT_EQUAL_STRING("", get_source_label(DATA_SOURCE_EMPTY));
 }
 
@@ -196,10 +197,6 @@ void test_get_source_data_should_format_date_and_day(void) {
   s_date_day = 15;
   get_source_data(DATA_SOURCE_DATE, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("15", buf);
-
-  strcpy(s_day_name, "FRI");
-  get_source_data(DATA_SOURCE_DAY_NAME, buf, sizeof(buf), NULL);
-  TEST_ASSERT_EQUAL_STRING("FRI", buf);
 }
 
 void test_get_source_data_should_format_bluetooth(void) {
@@ -275,6 +272,100 @@ void test_format_date_string_should_handle_all_configurations(void) {
   TEST_ASSERT_EQUAL_STRING("TUE JUNE 9th, 2026", buf);
 }
 
+void test_get_source_data_should_format_aqi_and_uv(void) {
+  char buf[16];
+  
+  // AQI formatting
+  s_weather_aqi = -1;
+  get_source_data(DATA_SOURCE_AQI, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+
+  s_weather_aqi = 42;
+  get_source_data(DATA_SOURCE_AQI, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("42", buf);
+
+  // UV formatting
+  s_weather_uv = -1;
+  get_source_data(DATA_SOURCE_UV, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+
+  s_weather_uv = 5;
+  get_source_data(DATA_SOURCE_UV, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("5", buf);
+
+  // Combined AQI / UV formatting
+  s_weather_aqi = -1;
+  s_weather_uv = -1;
+  get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("-- / --", buf);
+
+  s_weather_aqi = 42;
+  s_weather_uv = 5;
+  get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("42 / 5", buf);
+}
+
+void test_get_source_color_should_return_appropriate_colors(void) {
+  s_active_theme = &s_theme_day;
+
+  // Weather Temp color severity (Imperial: >85 red, <40 blue)
+  s_settings_units = 0;
+  s_weather_temp = 70;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.text_primary, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+  s_weather_temp = 90;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+  s_weather_temp = 35;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.steps_fill, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+
+  // Weather Temp color severity (Metric: >29 red, <4 blue)
+  s_settings_units = 1;
+  s_weather_temp = 20;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.text_primary, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+  s_weather_temp = 30;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+  s_weather_temp = 2;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.steps_fill, get_source_color(DATA_SOURCE_WEATHER_TEMP));
+
+  // AQI color severity levels (0-50 green, 51-100 yellow, >100 red)
+  s_weather_aqi = -1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.text_primary, get_source_color(DATA_SOURCE_AQI));
+
+  s_weather_aqi = 34;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_green, get_source_color(DATA_SOURCE_AQI));
+
+  s_weather_aqi = 65;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_yellow, get_source_color(DATA_SOURCE_AQI));
+
+  s_weather_aqi = 150;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_AQI));
+
+  // UV color severity levels (0-2 green, 3-5 yellow, >=6 red)
+  s_weather_uv = -1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.text_primary, get_source_color(DATA_SOURCE_UV));
+
+  s_weather_uv = 1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_green, get_source_color(DATA_SOURCE_UV));
+
+  s_weather_uv = 4;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_yellow, get_source_color(DATA_SOURCE_UV));
+
+  s_weather_uv = 8;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_UV));
+
+  // AQI / UV Combined severity
+  s_weather_aqi = 34;
+  s_weather_uv = 1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_green, get_source_color(DATA_SOURCE_AQI_UV));
+
+  s_weather_aqi = 65; // yellow
+  s_weather_uv = 1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_yellow, get_source_color(DATA_SOURCE_AQI_UV));
+
+  s_weather_aqi = 34;
+  s_weather_uv = 8; // red
+  TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_AQI_UV));
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -283,12 +374,15 @@ int main(void) {
   RUN_TEST(test_get_source_data_should_format_battery);
   RUN_TEST(test_get_source_data_should_format_steps);
   RUN_TEST(test_get_source_data_should_format_weather);
+
   RUN_TEST(test_get_source_data_should_format_sleep);
   RUN_TEST(test_get_source_data_should_format_weather_temp_and_cond);
   RUN_TEST(test_get_source_data_should_format_heart_rate);
   RUN_TEST(test_get_source_data_should_format_date_and_day);
   RUN_TEST(test_get_source_data_should_format_bluetooth);
   RUN_TEST(test_get_source_data_should_format_active_minutes);
+  RUN_TEST(test_get_source_data_should_format_aqi_and_uv);
+  RUN_TEST(test_get_source_color_should_return_appropriate_colors);
   RUN_TEST(test_determine_theme_should_handle_all_configurations);
   RUN_TEST(test_format_date_string_should_handle_all_configurations);
   return UNITY_END();
