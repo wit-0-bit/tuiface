@@ -12,3 +12,8 @@ package-lock.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Test binaries
+test/test_watchface
+test/*.dSYM
+

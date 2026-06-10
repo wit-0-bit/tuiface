@@ -770,8 +770,10 @@ static void deinit(void) {
   window_destroy(s_main_window);
 }
 
+#ifndef TEST_ENV
 int main(void) {
   init();
   app_event_loop();
   deinit();
 }
+#endif
