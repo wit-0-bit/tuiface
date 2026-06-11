@@ -19,7 +19,6 @@
 #define PERSIST_KEY_SLOT_3 1015
 #define PERSIST_KEY_SLOT_4 1016
 #define PERSIST_KEY_SLOT_5 1017
-// 1018 is retired (used briefly by interim builds) — do not reuse.
 
 #define WEATHER_CACHE_MAX_AGE_S (30 * 60)
 
