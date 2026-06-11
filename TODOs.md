@@ -8,9 +8,13 @@
 - [x] Air Quality Index (AQI) / UV Index (Separated color-coding implemented for individual and combined views)
 
 ## Interactions
-- [x] Sustained touch / hold on the screen to temporarily display a secondary
-  time zone over the main time (reverts instantly when released) — shipped:
-  Clay "Second Time Zone" setting (UTC offset, default Disabled); while held,
-  the TIME window title shows the offset, e.g. `TIME (+5:30)`.
-  Touch docs: [guide](https://developer.repebble.com/guides/events-and-services/touch/)
-  · [API](https://developer.repebble.com/docs/c/Foundation/Event_Service/TouchService/)
+
+> **Platform note (June 2026):** touchscreen interactions are off the table
+> for watchfaces. PebbleOS reserves the touch sensor for watchapps — a
+> watchface's `touch_service_subscribe()` silently no-ops (see
+> `src/fw/applib/touch_service.c` in
+> [coredevices/PebbleOS](https://github.com/coredevices/PebbleOS): "Touch is
+> reserved for watchapps; watchfaces must not consume it"). Note that
+> `touch_service_is_enabled()` still returns true on watchfaces, so don't
+> trust it. Accelerometer tap (`accel_tap_service_subscribe`) remains the
+> only gesture input available to watchfaces.

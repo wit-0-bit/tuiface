@@ -188,32 +188,6 @@ void vibes_double_pulse(void) {
   mock_vibes_count++;
 }
 
-// Touch: captures the registered handler so tests can fire synthetic events
-bool mock_touch_enabled = true;
-int mock_touch_subscribe_count = 0;
-int mock_touch_unsubscribe_count = 0;
-static TouchServiceHandler mock_touch_handler = NULL;
-static void* mock_touch_context = NULL;
-
-void touch_service_subscribe(TouchServiceHandler handler, void* context) {
-  mock_touch_handler = handler;
-  mock_touch_context = context;
-  mock_touch_subscribe_count++;
-}
-void touch_service_unsubscribe(void) {
-  mock_touch_handler = NULL;
-  mock_touch_unsubscribe_count++;
-}
-bool touch_service_is_enabled(void) {
-  return mock_touch_enabled;
-}
-void mock_touch_fire(TouchEventType type, int16_t x, int16_t y) {
-  if (mock_touch_handler) {
-    TouchEvent event = {.type = type, .x = x, .y = y};
-    mock_touch_handler(&event, mock_touch_context);
-  }
-}
-
 Window* window_create(void) {
   return NULL;
 }

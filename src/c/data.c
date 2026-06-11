@@ -19,8 +19,6 @@ int s_date_day = 10;
 int s_settings_theme = 0;        // 0 = Auto, 1 = Day, 2 = Night
 int s_settings_units = 0;        // 0 = Imperial, 1 = Metric
 int s_settings_date_format = 0;  // 0 = Weekday + ISO, 1 = ISO + Weekday, 2 = Full Text
-int s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
-bool s_secondary_time_active = false;
 
 ComplicationDataSource s_left_sidebar_source = DATA_SOURCE_STEPS;
 ComplicationDataSource s_right_sidebar_source = DATA_SOURCE_BATTERY;
@@ -230,34 +228,6 @@ static void ordinal_suffix(int day, char* buf) {
     default:
       strcpy(buf, "th");
       break;
-  }
-}
-
-// Title for the TIME window frame: "TIME" normally, "TIME (+5:30)" while the
-// secondary time zone is being shown.
-void build_time_window_title(char* buf, int len) {
-  if (!s_secondary_time_active || s_secondary_tz_offset_min == SECONDARY_TZ_DISABLED) {
-    snprintf(buf, len, "TIME");
-    return;
-  }
-  int min = s_secondary_tz_offset_min;
-  char sign = (min < 0) ? '-' : '+';
-  int abs_min = (min < 0) ? -min : min;
-  if (abs_min % 60 == 0) {
-    snprintf(buf, len, "TIME (%c%d)", sign, abs_min / 60);
-  } else {
-    snprintf(buf, len, "TIME (%c%d:%02d)", sign, abs_min / 60, abs_min % 60);
-  }
-}
-
-// The tm to render in the TIME window: local time normally, UTC + offset
-// while the secondary time zone is held active. (Pebble's time() is UTC.)
-void get_display_time(time_t now, struct tm* out) {
-  if (s_secondary_time_active && s_secondary_tz_offset_min != SECONDARY_TZ_DISABLED) {
-    time_t shifted = now + (time_t)s_secondary_tz_offset_min * 60;
-    *out = *gmtime(&shifted);
-  } else {
-    *out = *localtime(&now);
   }
 }
 

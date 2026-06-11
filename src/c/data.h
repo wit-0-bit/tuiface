@@ -44,12 +44,6 @@ extern int s_settings_theme;
 extern int s_settings_units;
 extern int s_settings_date_format;
 
-// Secondary time zone (hold-to-show on touch hardware). The offset is the
-// zone's UTC offset in minutes; SECONDARY_TZ_DISABLED turns the feature off.
-#define SECONDARY_TZ_DISABLED (-10000)
-extern int s_secondary_tz_offset_min;
-extern bool s_secondary_time_active;
-
 extern ComplicationDataSource s_left_sidebar_source;
 extern ComplicationDataSource s_right_sidebar_source;
 
@@ -67,5 +61,3 @@ const char* get_source_label(ComplicationDataSource source);
 void format_date_string(int format, struct tm* tick_time, char* buffer, int buf_size);
 void to_upper_str(char* str);
 int tuple_get_int(Tuple* tuple);
-void build_time_window_title(char* buf, int len);
-void get_display_time(time_t now, struct tm* out);

@@ -23,10 +23,6 @@ Built for the modern Pebble lineup; currently targets **emery**
   design.
 - **Day/Night themes** with automatic switching (day from 06:00, night from
   18:00), or pin either one. Both palettes are high contrast.
-- **Hold for a second time zone** (uses the Pebble Time 2 touchscreen): pick
-  a UTC offset in settings, then press and hold the screen — the TIME window
-  relabels to show the offset (e.g. `TIME (+5:30)`) and displays that zone's
-  time until you let go.
 - **Color-coded values**: battery, temperature, AQI, and UV shift
   green/yellow/red (or blue for cold) as conditions change.
 - **Weather without an API key** — data comes from
@@ -43,7 +39,6 @@ deliberately few:
 | Theme | Auto (day/night), Day, Night |
 | Units | Imperial, Metric |
 | Date format | Weekday + ISO, ISO + Weekday, full text |
-| Second time zone | Disabled (default), or a UTC offset to show while holding the screen |
 | Slots 1–5 | Data source per slot, or Empty |
 
 That's the whole surface. Textface favors good defaults over knobs; if a
