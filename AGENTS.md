@@ -47,6 +47,17 @@ pebble install --emulator emery       # run on the emery emulator
 pebble install --phone <ip>           # install to a paired phone
 ```
 
+The README screenshot (`screenshot_current.png`) is a real capture, not a
+mockup — regenerate it whenever the face's appearance changes:
+
+```sh
+pebble install --emulator emery       # get the current build running
+pebble screenshot --emulator emery screenshot_current.png
+```
+
+(`--phone <ip>` works in place of `--emulator emery` to capture from real
+hardware, which is what the README should ideally show.)
+
 Unit tests run on the host — no SDK or emulator needed:
 
 ```sh
