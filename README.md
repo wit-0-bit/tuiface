@@ -102,7 +102,8 @@ cd test && make test
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how it all works: data flow,
   modules, the complication system, theming, testing
 - [docs/SIDEBARS.md](docs/SIDEBARS.md) — why the edge bars are fixed
-- [ISSUES.md](ISSUES.md) — known bugs · [TODOs.md](TODOs.md) — planned ideas
+- [ISSUES.md](ISSUES.md) — known bugs · [TODOs.md](TODOs.md) — planned work ·
+  [IDEAS.md](IDEAS.md) — undecided ideas
 
 Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
 

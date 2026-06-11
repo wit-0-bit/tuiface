@@ -131,4 +131,6 @@ message key + JS fetch + inbox parsing → unit tests.
 ## Project tracking
 
 - [ISSUES.md](ISSUES.md) — known bugs and suspect behavior.
-- [TODOs.md](TODOs.md) — future complication and interaction ideas.
+- [TODOs.md](TODOs.md) — approved work that hasn't been built yet.
+- [IDEAS.md](IDEAS.md) — undecided brainstorm material. Nothing there is
+  approved; don't implement from it (see the complication rule above).

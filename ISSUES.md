@@ -1,11 +1,12 @@
 # Known Issues
 
-Bugs and suspect behavior, ordered roughly by user impact. Feature ideas live
-in [TODOs.md](TODOs.md).
+Bugs and suspect behavior, ordered roughly by user impact. Approved upcoming
+work lives in [TODOs.md](TODOs.md); unvetted ideas in [IDEAS.md](IDEAS.md).
 
 ## Minor / housekeeping
 
 - **Unimplemented enum values exist but are selectable nowhere**
   (`DATA_SOURCE_DAY_NAME`, `SUNRISE`, `SUNSET`, `HIGH/LOW_TEMP`,
   `UTC_OFFSET`): `get_source_label()` returns `???` and `get_source_data()`
-  returns an empty string. Dormant until those TODOs are implemented.
+  returns an empty string. Dormant unless those ideas (see IDEAS.md) are
+  ever approved and implemented.

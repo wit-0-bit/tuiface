@@ -171,7 +171,7 @@ generated output. Neither is hand-edited.
 
 ## Miscellaneous
 
-- `TODOs.md` tracks planned complications and interactions; `ISSUES.md` tracks
-  known bugs.
+- `TODOs.md` tracks approved-but-unbuilt work, `IDEAS.md` holds undecided
+  brainstorm material, and `ISSUES.md` tracks known bugs.
 - `AGENTS.md` holds the project values, conventions, and hard rules for
   contributors and AI agents.
