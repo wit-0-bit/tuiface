@@ -49,7 +49,8 @@ Pebble.addEventListener('ready', function(e) {
 });
 
 Pebble.addEventListener('appmessage', function(e) {
-  // The watch only asks when its own cache is stale — always fetch.
+  // The watch asks on launch when its persisted cache is stale, and on a
+  // fixed :00/:30 cadence regardless of cache age — always fetch.
   console.log('AppMessage received!');
   getWeather();
 });
