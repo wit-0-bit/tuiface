@@ -43,7 +43,9 @@ static void update_health_info() {
     s_active_minutes = 0;
   }
 
-  HealthServiceAccessibilityMask hr_mask = health_service_metric_accessible(HealthMetricHeartRateBPM, start, end);
+  // Heart rate accessibility must be checked at an instant, not over a day
+  // range — the range form reports the metric unavailable and BPM never shows.
+  HealthServiceAccessibilityMask hr_mask = health_service_metric_accessible(HealthMetricHeartRateBPM, end, end);
   if (hr_mask & HealthServiceAccessibilityMaskAvailable) {
     HealthValue hr = health_service_peek_current_value(HealthMetricHeartRateBPM);
     s_heart_rate = (int)hr;

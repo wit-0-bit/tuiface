@@ -234,6 +234,7 @@ void persist_write_int(const uint32_t key, const int32_t value);
 int persist_write_string(const uint32_t key, const char *cstring);
 int persist_read_string(const uint32_t key, char *buffer, const size_t buffer_size);
 void mock_persist_reset(void); // test helper, not part of the real SDK
+extern int32_t mock_heart_rate; // test knob, not part of the real SDK
 TextLayer *text_layer_create(GRect frame);
 void text_layer_destroy(TextLayer *text_layer);
 Layer *text_layer_get_layer(TextLayer *text_layer);

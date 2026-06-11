@@ -38,13 +38,23 @@ void graphics_fill_rect(GContext *ctx, GRect rect, uint16_t corner_radius, GCorn
 
 void health_service_events_subscribe(void (*handler)(HealthEventType event, void *context), void *context) {}
 void health_service_events_unsubscribe(void) {}
+int32_t mock_heart_rate = 0;
+
 HealthServiceAccessibilityMask health_service_metric_accessible(HealthMetric metric, time_t time_start, time_t time_end) {
+  // Mirror real firmware: heart-rate accessibility is only reported for an
+  // instant query; a time-range query comes back unsupported.
+  if (metric == HealthMetricHeartRateBPM && time_start != time_end) {
+    return HealthServiceAccessibilityMaskNotSupported;
+  }
   return HealthServiceAccessibilityMaskAvailable;
 }
 HealthServiceAccessibilityMask health_service_metric_averaged_accessible(HealthMetric metric, time_t time_start, time_t time_end, HealthServiceTimeScope scope) {
   return HealthServiceAccessibilityMaskAvailable;
 }
-int32_t health_service_peek_current_value(HealthMetric metric) { return 0; }
+int32_t health_service_peek_current_value(HealthMetric metric) {
+  if (metric == HealthMetricHeartRateBPM) return mock_heart_rate;
+  return 0;
+}
 int32_t health_service_sum_averaged(HealthMetric metric, time_t time_start, time_t time_end, HealthServiceTimeScope scope) { return 10000; }
 int32_t health_service_sum_today(HealthMetric metric) { return 5000; }
 

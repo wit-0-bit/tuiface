@@ -431,6 +431,25 @@ void test_weather_cache_should_keep_values_at_edge_of_window(void) {
   TEST_ASSERT_EQUAL_STRING("RAIN", s_weather_cond);
 }
 
+void test_update_health_info_should_read_heart_rate(void) {
+  // The mock reports HR inaccessible for range queries (like real firmware),
+  // so this passing proves update_health_info uses an instant query.
+  mock_heart_rate = 72;
+  update_health_info();
+  TEST_ASSERT_EQUAL_INT(72, s_heart_rate);
+
+  char buf[16];
+  get_source_data(DATA_SOURCE_HEART_RATE, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("72", buf);
+
+  // No recent reading: 0 renders as the no-data state
+  mock_heart_rate = 0;
+  update_health_info();
+  TEST_ASSERT_EQUAL_INT(0, s_heart_rate);
+  get_source_data(DATA_SOURCE_HEART_RATE, buf, sizeof(buf), NULL);
+  TEST_ASSERT_EQUAL_STRING("--", buf);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -453,5 +472,6 @@ int main(void) {
   RUN_TEST(test_weather_cache_should_round_trip_when_fresh);
   RUN_TEST(test_weather_cache_should_reject_missing_or_stale_data);
   RUN_TEST(test_weather_cache_should_keep_values_at_edge_of_window);
+  RUN_TEST(test_update_health_info_should_read_heart_rate);
   return UNITY_END();
 }

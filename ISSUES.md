@@ -3,27 +3,6 @@
 Bugs and suspect behavior, ordered roughly by user impact. Feature ideas live
 in [TODOs.md](TODOs.md).
 
-## 2. Heart-rate (BPM) complication never shows data
-
-**Symptom:** BPM slot always shows `--`.
-
-**Cause (most likely):** `update_health_info()` in `src/c/main.c:46-52` checks
-availability with
-`health_service_metric_accessible(HealthMetricHeartRateBPM, start_of_today, now)`
-— a day-long range. The official HRM guide checks accessibility at an instant:
-`health_service_metric_accessible(HealthMetricHeartRateBPM, time(NULL), time(NULL))`,
-then `health_service_peek_current_value()`. A day-long range can report the
-metric inaccessible (HR history doesn't span the range), so the code takes the
-`else` branch and pins `s_heart_rate = 0`, which renders as `--`.
-
-**Also worth knowing:**
-- The emulator has no HRM; on-hardware testing is required.
-- The filtered BPM value is averaged and can be several minutes old; a `0`
-  reading is normal right after putting the watch on. The default HR sampling
-  interval is sparse — `health_service_set_heart_rate_sample_period()` can
-  request more frequent samples while the face is visible (remember to reset
-  to 0 on exit).
-
 ## 3. Auto theme flip leaves time/date text invisible
 
 **Symptom:** If the watchface stays open across 06:00 or 18:00 in Auto theme
