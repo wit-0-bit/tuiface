@@ -99,6 +99,9 @@ Textface was developed with extensive assistance from AI coding agents —
 Google's **Gemini** and Anthropic's **Claude** — under human direction and
 review. This includes code, tests, and documentation.
 
+If you'd rather not use a watchface built with this much AI involvement,
+that's completely fair — no hard feelings.
+
 ## License
 
 This project is licensed under the
