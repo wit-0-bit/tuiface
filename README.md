@@ -92,3 +92,18 @@ cd test && make test
 - [ISSUES.md](ISSUES.md) — known bugs · [TODOs.md](TODOs.md) — planned ideas
 
 Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
+
+## License
+
+This project is licensed under the
+[PolyForm Noncommercial License 1.0.0](LICENSE.md). In short: you may fork it,
+modify it, and redistribute your own versions freely — for any **noncommercial**
+purpose. Selling this watchface or a derivative of it is not permitted.
+
+If you make improvements, contributing them back upstream via a pull request
+is warmly appreciated (though not required).
+
+Weather, UV, and air-quality data is provided by
+[Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0, free for non-commercial
+use). See [docs/LICENSES.md](docs/LICENSES.md) for a full audit of upstream
+dependency licenses.

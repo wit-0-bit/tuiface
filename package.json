@@ -2,6 +2,7 @@
   "name": "textface",
   "author": "Elizardbeth",
   "version": "1.0.1",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {
