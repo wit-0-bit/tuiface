@@ -1,8 +1,13 @@
 # Contributing to Textface
 
-Thanks for your interest! This page is for humans — whether you want to send
-a change back or take the project somewhere else entirely. (AI agents and
-day-to-day conventions: see [AGENTS.md](AGENTS.md).)
+Oh. Um. Hi! I genuinely didn't expect anyone to find this page. Give me a
+second to tidy up.
+
+Okay. So, in the (let's be honest, unlikely) event that you've found this
+watchface *and* want to contribute to it: welcome, and thank you! This page
+is for humans — whether you want to send a change back or take the project
+somewhere else entirely. (AI agents and day-to-day conventions: see
+[AGENTS.md](AGENTS.md).)
 
 ## The short version
 
