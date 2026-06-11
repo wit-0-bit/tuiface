@@ -2,12 +2,51 @@ var Clay = require('@rebble/clay');
 var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig);
 
+var WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+
+function sendWeatherDict(dict, logLabel) {
+  try {
+    localStorage.setItem('weather-cache', JSON.stringify({ payload: dict, fetchedAt: Date.now() }));
+  } catch (e) {
+    console.log('Error writing weather cache: ' + e);
+  }
+  Pebble.sendAppMessage(dict,
+    function(e) { console.log(logLabel + ' sent successfully!'); },
+    function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
+  );
+}
+
+function readFreshWeatherCache() {
+  try {
+    var cache = JSON.parse(localStorage.getItem('weather-cache'));
+    if (cache && cache.payload && (Date.now() - cache.fetchedAt) < WEATHER_CACHE_MAX_AGE_MS) {
+      return cache.payload;
+    }
+  } catch (e) {
+    console.log('Error reading weather cache: ' + e);
+  }
+  return null;
+}
+
 Pebble.addEventListener('ready', function(e) {
   console.log('PebbleKit JS ready!');
-  getWeather();
+  // The watchface relaunches every time the user navigates back to it;
+  // don't hit the network if the last fetch is still fresh. Resend the
+  // cached payload so a watch with cleared storage still gets data.
+  var cached = readFreshWeatherCache();
+  if (cached) {
+    console.log('Weather cache fresh, resending cached payload');
+    Pebble.sendAppMessage(cached,
+      function(e) { console.log('Cached weather sent successfully!'); },
+      function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
+    );
+  } else {
+    getWeather();
+  }
 });
 
 Pebble.addEventListener('appmessage', function(e) {
+  // The watch only asks when its own cache is stale — always fetch.
   console.log('AppMessage received!');
   getWeather();
 });
@@ -75,28 +114,20 @@ function getWeather() {
                 }
               }
               
-              var dict = {
+              sendWeatherDict({
                 'WEATHER_TEMP': temp,
                 'WEATHER_COND': cond,
                 'WEATHER_AQI': aqi,
                 'WEATHER_UV': uv
-              };
-              Pebble.sendAppMessage(dict,
-                function(e) { console.log('Weather, AQI & UV sent successfully!'); },
-                function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
-              );
+              }, 'Weather, AQI & UV');
             };
             aqiXhr.onerror = function() {
-              var dict = {
+              sendWeatherDict({
                 'WEATHER_TEMP': temp,
                 'WEATHER_COND': cond,
                 'WEATHER_AQI': 0,
                 'WEATHER_UV': uv
-              };
-              Pebble.sendAppMessage(dict,
-                function(e) { console.log('Weather & UV sent successfully (no AQI)!'); },
-                function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
-              );
+              }, 'Weather & UV (no AQI)');
             };
             aqiXhr.open('GET', aqiUrl);
             aqiXhr.send();

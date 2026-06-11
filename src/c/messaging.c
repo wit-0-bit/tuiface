@@ -4,6 +4,36 @@
 #include "main.h"
 #include "drawing.h"
 
+void save_weather_cache(void) {
+  persist_write_int(PERSIST_KEY_WEATHER_TEMP, s_weather_temp);
+  persist_write_string(PERSIST_KEY_WEATHER_COND, s_weather_cond);
+  persist_write_int(PERSIST_KEY_WEATHER_AQI, s_weather_aqi);
+  persist_write_int(PERSIST_KEY_WEATHER_UV, s_weather_uv);
+  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP, (int32_t)time(NULL));
+}
+
+bool load_weather_cache(void) {
+  if (!persist_exists(PERSIST_KEY_WEATHER_TIMESTAMP)) return false;
+
+  int32_t saved_at = persist_read_int(PERSIST_KEY_WEATHER_TIMESTAMP);
+  int32_t age = (int32_t)time(NULL) - saved_at;
+  if (age < 0 || age > WEATHER_CACHE_MAX_AGE_S) return false;
+
+  if (persist_exists(PERSIST_KEY_WEATHER_TEMP)) {
+    s_weather_temp = persist_read_int(PERSIST_KEY_WEATHER_TEMP);
+  }
+  if (persist_exists(PERSIST_KEY_WEATHER_COND)) {
+    persist_read_string(PERSIST_KEY_WEATHER_COND, s_weather_cond, sizeof(s_weather_cond));
+  }
+  if (persist_exists(PERSIST_KEY_WEATHER_AQI)) {
+    s_weather_aqi = persist_read_int(PERSIST_KEY_WEATHER_AQI);
+  }
+  if (persist_exists(PERSIST_KEY_WEATHER_UV)) {
+    s_weather_uv = persist_read_int(PERSIST_KEY_WEATHER_UV);
+  }
+  return true;
+}
+
 void request_weather() {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
@@ -30,6 +60,12 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   Tuple *uv_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_UV);
   if (uv_tuple) {
     s_weather_uv = uv_tuple->value->int32;
+  }
+
+  // Persist the weather cache only for a real weather payload, so a
+  // settings-only message can't refresh the timestamp.
+  if (temp_tuple && cond_tuple) {
+    save_weather_cache();
   }
 
   // Settings: Theme

@@ -3,27 +3,6 @@
 Bugs and suspect behavior, ordered roughly by user impact. Feature ideas live
 in [TODOs.md](TODOs.md).
 
-## 1. Weather/AQI/UV reset every time the watchface relaunches
-
-**Symptom:** All weather-derived complications show `--` for several seconds
-(or indefinitely if location/network fails) after navigating away from the
-watchface and back.
-
-**Cause:** Watchfaces are killed when you leave them and relaunched on return.
-The weather cache lives only in RAM (`s_weather_temp`, `s_weather_cond`,
-`s_weather_aqi`, `s_weather_uv` in `src/c/data.c`); unlike the settings, it is
-never written to persistent storage. On every relaunch the values reset to
-their sentinels and the watch waits for a fresh JS fetch (geolocation + two
-HTTP requests).
-
-**Fix direction:** Persist the four weather values plus a fetch timestamp
-(e.g. extra persist keys) whenever weather arrives in
-`inbox_received_callback()`. In `init()`, restore them if the timestamp is
-fresher than 30 minutes and skip the immediate `request_weather()` in that
-case. The phone-side JS `ready` handler should also be gated, otherwise every
-relaunch still triggers a fetch (battery cost) even though the display is
-already populated.
-
 ## 2. Heart-rate (BPM) complication never shows data
 
 **Symptom:** BPM slot always shows `--`.

@@ -231,6 +231,9 @@ void layer_set_update_proc(Layer *layer, void (*update_proc)(Layer *layer, GCont
 bool persist_exists(const uint32_t key);
 int32_t persist_read_int(const uint32_t key);
 void persist_write_int(const uint32_t key, const int32_t value);
+int persist_write_string(const uint32_t key, const char *cstring);
+int persist_read_string(const uint32_t key, char *buffer, const size_t buffer_size);
+void mock_persist_reset(void); // test helper, not part of the real SDK
 TextLayer *text_layer_create(GRect frame);
 void text_layer_destroy(TextLayer *text_layer);
 Layer *text_layer_get_layer(TextLayer *text_layer);

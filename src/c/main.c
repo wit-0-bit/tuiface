@@ -205,8 +205,10 @@ static void init(void) {
   app_message_register_inbox_dropped(inbox_dropped_callback);
   app_message_open(512, 512);
 
-  // Initial weather request
-  request_weather();
+  // Restore cached weather; only hit the network if the cache is stale
+  if (!load_weather_cache()) {
+    request_weather();
+  }
   update_time();
 }
 

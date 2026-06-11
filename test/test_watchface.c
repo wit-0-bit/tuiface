@@ -366,6 +366,71 @@ void test_get_source_color_should_return_appropriate_colors(void) {
   TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_AQI_UV));
 }
 
+void test_weather_cache_should_round_trip_when_fresh(void) {
+  mock_persist_reset();
+
+  s_weather_temp = 72;
+  strcpy(s_weather_cond, "SUN");
+  s_weather_aqi = 42;
+  s_weather_uv = 5;
+  save_weather_cache();
+
+  // Simulate a relaunch: globals reset to sentinels
+  s_weather_temp = -999;
+  strcpy(s_weather_cond, "--");
+  s_weather_aqi = -1;
+  s_weather_uv = -1;
+
+  TEST_ASSERT_TRUE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
+  TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
+  TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
+  TEST_ASSERT_EQUAL_INT(5, s_weather_uv);
+}
+
+void test_weather_cache_should_reject_missing_or_stale_data(void) {
+  mock_persist_reset();
+
+  // Nothing persisted yet
+  TEST_ASSERT_FALSE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(-999, s_weather_temp);
+
+  // Persist, then age the timestamp past the 30-minute window
+  s_weather_temp = 72;
+  strcpy(s_weather_cond, "SUN");
+  save_weather_cache();
+  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP,
+                    (int32_t)time(NULL) - (WEATHER_CACHE_MAX_AGE_S + 1));
+
+  s_weather_temp = -999;
+  strcpy(s_weather_cond, "--");
+  TEST_ASSERT_FALSE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(-999, s_weather_temp);
+  TEST_ASSERT_EQUAL_STRING("--", s_weather_cond);
+
+  // A timestamp from the future (clock change) is also rejected
+  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP, (int32_t)time(NULL) + 3600);
+  TEST_ASSERT_FALSE(load_weather_cache());
+}
+
+void test_weather_cache_should_keep_values_at_edge_of_window(void) {
+  mock_persist_reset();
+
+  s_weather_temp = 18;
+  strcpy(s_weather_cond, "RAIN");
+  s_weather_aqi = 12;
+  s_weather_uv = 2;
+  save_weather_cache();
+  // Just inside the freshness window
+  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP,
+                    (int32_t)time(NULL) - (WEATHER_CACHE_MAX_AGE_S - 5));
+
+  s_weather_temp = -999;
+  TEST_ASSERT_TRUE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(18, s_weather_temp);
+  TEST_ASSERT_EQUAL_STRING("RAIN", s_weather_cond);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -385,5 +450,8 @@ int main(void) {
   RUN_TEST(test_get_source_color_should_return_appropriate_colors);
   RUN_TEST(test_determine_theme_should_handle_all_configurations);
   RUN_TEST(test_format_date_string_should_handle_all_configurations);
+  RUN_TEST(test_weather_cache_should_round_trip_when_fresh);
+  RUN_TEST(test_weather_cache_should_reject_missing_or_stale_data);
+  RUN_TEST(test_weather_cache_should_keep_values_at_edge_of_window);
   return UNITY_END();
 }

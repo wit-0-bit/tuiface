@@ -56,11 +56,29 @@ void layer_mark_dirty(Layer *layer) {}
 void layer_set_hidden(Layer *layer, bool hidden) {}
 void layer_set_update_proc(Layer *layer, void (*update_proc)(Layer *layer, GContext *ctx)) {}
 
+char mock_persist_strings[256][64];
+
 bool persist_exists(const uint32_t key) { return mock_persist_exists[key % 256]; }
 int32_t persist_read_int(const uint32_t key) { return mock_persist_storage[key % 256]; }
 void persist_write_int(const uint32_t key, const int32_t value) {
   mock_persist_storage[key % 256] = value;
   mock_persist_exists[key % 256] = true;
+}
+int persist_write_string(const uint32_t key, const char *cstring) {
+  strncpy(mock_persist_strings[key % 256], cstring, sizeof(mock_persist_strings[0]) - 1);
+  mock_persist_strings[key % 256][sizeof(mock_persist_strings[0]) - 1] = '\0';
+  mock_persist_exists[key % 256] = true;
+  return strlen(mock_persist_strings[key % 256]) + 1;
+}
+int persist_read_string(const uint32_t key, char *buffer, const size_t buffer_size) {
+  strncpy(buffer, mock_persist_strings[key % 256], buffer_size - 1);
+  buffer[buffer_size - 1] = '\0';
+  return strlen(buffer) + 1;
+}
+void mock_persist_reset(void) {
+  memset(mock_persist_storage, 0, sizeof(mock_persist_storage));
+  memset(mock_persist_exists, 0, sizeof(mock_persist_exists));
+  memset(mock_persist_strings, 0, sizeof(mock_persist_strings));
 }
 
 TextLayer *text_layer_create(GRect frame) { return NULL; }
