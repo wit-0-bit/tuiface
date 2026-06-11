@@ -604,6 +604,124 @@ void test_inbox_units_change_should_trigger_weather_refetch(void) {
   TEST_ASSERT_EQUAL_INT(before + expected_tick_fetches(), mock_outbox_sends);
 }
 
+void test_build_time_window_title_should_format_offsets(void) {
+  char buf[24];
+
+  // Feature disabled: plain title even while "held"
+  s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
+  s_secondary_time_active = true;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME", buf);
+
+  // Whole-hour offsets
+  s_secondary_tz_offset_min = 120;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (+2)", buf);
+
+  s_secondary_tz_offset_min = -420;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (-7)", buf);
+
+  s_secondary_tz_offset_min = 0;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (+0)", buf);
+
+  // Fractional offsets
+  s_secondary_tz_offset_min = 330;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (+5:30)", buf);
+
+  s_secondary_tz_offset_min = 345;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (+5:45)", buf);
+
+  s_secondary_tz_offset_min = -570;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME (-9:30)", buf);
+
+  // Not held: plain title regardless of setting
+  s_secondary_time_active = false;
+  build_time_window_title(buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TIME", buf);
+
+  s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
+}
+
+void test_get_display_time_should_shift_by_offset(void) {
+  time_t now = 1750000000;  // fixed epoch for determinism
+  struct tm out;
+
+  // Inactive: matches local time
+  s_secondary_time_active = false;
+  s_secondary_tz_offset_min = 330;
+  struct tm local_tm = *localtime(&now);
+  get_display_time(now, &out);
+  TEST_ASSERT_EQUAL_INT(local_tm.tm_hour, out.tm_hour);
+  TEST_ASSERT_EQUAL_INT(local_tm.tm_min, out.tm_min);
+
+  // Active: UTC + offset
+  s_secondary_time_active = true;
+  time_t shifted = now + 330 * 60;
+  struct tm expect = *gmtime(&shifted);
+  get_display_time(now, &out);
+  TEST_ASSERT_EQUAL_INT(expect.tm_hour, out.tm_hour);
+  TEST_ASSERT_EQUAL_INT(expect.tm_min, out.tm_min);
+
+  s_secondary_time_active = false;
+  s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
+}
+
+void test_touch_hold_should_toggle_secondary_time(void) {
+  mock_touch_enabled = true;
+  s_secondary_time_active = false;
+
+  // Disabled setting: no subscription
+  s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
+  int subs = mock_touch_subscribe_count;
+  update_touch_subscription();
+  TEST_ASSERT_EQUAL_INT(subs, mock_touch_subscribe_count);
+
+  // Enabled: subscribes exactly once (idempotent)
+  s_secondary_tz_offset_min = -420;
+  update_touch_subscription();
+  update_touch_subscription();
+  TEST_ASSERT_EQUAL_INT(subs + 1, mock_touch_subscribe_count);
+
+  // Hold shows, position updates don't disturb, liftoff reverts
+  mock_touch_fire(TouchEvent_Touchdown, 100, 100);
+  TEST_ASSERT_TRUE(s_secondary_time_active);
+  mock_touch_fire(TouchEvent_PositionUpdate, 90, 110);
+  TEST_ASSERT_TRUE(s_secondary_time_active);
+  mock_touch_fire(TouchEvent_Liftoff, 90, 110);
+  TEST_ASSERT_FALSE(s_secondary_time_active);
+
+  // Disabling mid-hold unsubscribes and clears the held state
+  mock_touch_fire(TouchEvent_Touchdown, 0, 0);
+  TEST_ASSERT_TRUE(s_secondary_time_active);
+  int unsubs = mock_touch_unsubscribe_count;
+  s_secondary_tz_offset_min = SECONDARY_TZ_DISABLED;
+  update_touch_subscription();
+  TEST_ASSERT_EQUAL_INT(unsubs + 1, mock_touch_unsubscribe_count);
+  TEST_ASSERT_FALSE(s_secondary_time_active);
+}
+
+void test_inbox_should_parse_secondary_tz(void) {
+  mock_persist_reset();
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SECONDARY_TZ, "-420");  // Clay sends strings
+
+  inbox_received_callback(NULL, NULL);
+
+  TEST_ASSERT_EQUAL_INT(-420, s_secondary_tz_offset_min);
+  TEST_ASSERT_EQUAL_INT(-420, persist_read_int(PERSIST_KEY_SECONDARY_TZ));
+
+  // Setting back to Disabled clears it
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SECONDARY_TZ, "-10000");
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_EQUAL_INT(SECONDARY_TZ_DISABLED, s_secondary_tz_offset_min);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -634,5 +752,9 @@ int main(void) {
   RUN_TEST(test_inbox_settings_only_message_should_not_stamp_weather_cache);
   RUN_TEST(test_inbox_should_parse_slot_assignments);
   RUN_TEST(test_inbox_units_change_should_trigger_weather_refetch);
+  RUN_TEST(test_build_time_window_title_should_format_offsets);
+  RUN_TEST(test_get_display_time_should_shift_by_offset);
+  RUN_TEST(test_touch_hold_should_toggle_secondary_time);
+  RUN_TEST(test_inbox_should_parse_secondary_tz);
   return UNITY_END();
 }

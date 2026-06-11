@@ -36,7 +36,8 @@
       "SLOT_4",
       "SLOT_5",
       "WEATHER_AQI",
-      "WEATHER_UV"
+      "WEATHER_UV",
+      "SECONDARY_TZ"
     ],
     "resources": {
       "media": []

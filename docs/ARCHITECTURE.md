@@ -130,12 +130,25 @@ platforms would require deriving these from `layer_get_bounds()`.
 | `SETTINGS_UNITS` | 0 Imperial, 1 Metric | Temp formatting/colors; JS picks the API unit, and a unit change triggers an immediate re-fetch |
 | `SETTINGS_DATE_FORMAT` | 0 `TUE 2026-06-09`, 1 `2026-06-09 TUE`, 2 `TUE JUNE 9th, 2026` | `format_date_string()` |
 | `SLOT_1`–`SLOT_5` | `ComplicationDataSource` value | Slot sources (1=top-left, 2=top-right, 3=bottom-left, 4=bottom-center, 5=bottom-right) |
+| `SECONDARY_TZ` | UTC offset in minutes, or `-10000` (`SECONDARY_TZ_DISABLED`) | Hold-to-show second time zone (below) |
 
 Clay sends values as strings; `tuple_get_int()` (`data.c`) normalizes string
 and integer tuples. On receipt, `inbox_received_callback()` (`messaging.c`)
 persists each setting under a dedicated `PERSIST_KEY_*` constant
 (`messaging.h`), and `load_settings()` restores them on launch. These persist
 keys are hand-assigned and independent of `messageKeys` ordering.
+
+## Touch: hold-to-show second time zone
+
+On touch hardware (emery defines `PBL_TOUCH`), `update_touch_subscription()`
+(`main.c`) subscribes to the touch service — but only while a second time
+zone is configured, since subscribing powers the touch sensor on. The handler
+sets `s_secondary_time_active` on `TouchEvent_Touchdown` and clears it on
+`TouchEvent_Liftoff`; while active, `get_display_time()` (`data.c`) renders
+UTC + offset instead of local time (Pebble's `time()` is UTC), and
+`build_time_window_title()` relabels the TIME frame, e.g. `TIME (+5:30)`.
+The date line stays local. The offset is a fixed UTC offset, so it doesn't
+track the target zone's DST.
 
 ## Testing
 

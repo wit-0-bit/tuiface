@@ -76,9 +76,13 @@ void update_time() {
   time_t temp = time(NULL);
   struct tm* tick_time = localtime(&temp);
 
+  // The TIME window shows the secondary zone while held; date stays local
+  struct tm display_tm;
+  get_display_time(temp, &display_tm);
+
   static char s_time_buffer[8];
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M",
-           tick_time);
+           &display_tm);
 
   char* time_str = s_time_buffer;
   if (!clock_is_24h_style() && s_time_buffer[0] == '0') {
@@ -136,6 +140,41 @@ static void health_handler(HealthEventType event, void* context) {
 #endif
 
 // -----------------------------------------------------------------------------
+// Touch (hold to show the secondary time zone)
+// -----------------------------------------------------------------------------
+
+#if defined(PBL_TOUCH)
+static bool s_touch_subscribed = false;
+
+static void touch_handler(const TouchEvent* event, void* context) {
+  if (event->type == TouchEvent_Touchdown) {
+    s_secondary_time_active = true;
+  } else if (event->type == TouchEvent_Liftoff) {
+    s_secondary_time_active = false;
+  } else {
+    return;  // position updates don't change state
+  }
+  update_time();
+}
+#endif
+
+// Subscribing powers the touch sensor on, so only hold a subscription while
+// the feature is enabled. Safe to call repeatedly (init and settings pushes).
+void update_touch_subscription(void) {
+#if defined(PBL_TOUCH)
+  bool want = (s_secondary_tz_offset_min != SECONDARY_TZ_DISABLED) && touch_service_is_enabled();
+  if (want && !s_touch_subscribed) {
+    touch_service_subscribe(touch_handler, NULL);
+    s_touch_subscribed = true;
+  } else if (!want && s_touch_subscribed) {
+    touch_service_unsubscribe();
+    s_touch_subscribed = false;
+    s_secondary_time_active = false;
+  }
+#endif
+}
+
+// -----------------------------------------------------------------------------
 // Window Management
 // -----------------------------------------------------------------------------
 
@@ -189,6 +228,7 @@ static void main_window_unload(Window* window) {
 static void init(void) {
   // Load settings from persistent storage
   load_settings();
+  update_touch_subscription();
 
   s_main_window = window_create();
   apply_theme();
@@ -224,6 +264,9 @@ static void init(void) {
 }
 
 static void deinit(void) {
+#if defined(PBL_TOUCH)
+  if (s_touch_subscribed) touch_service_unsubscribe();
+#endif
   window_destroy(s_main_window);
 }
 

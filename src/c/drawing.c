@@ -172,8 +172,10 @@ void canvas_update_proc(Layer* layer, GContext* ctx) {
   draw_sidebar_complication(ctx, GRect(bounds.size.w - 4, 0, 4, bounds.size.h),
                             s_right_sidebar_source, false);
 
-  // Draw TIME and DATE windows
-  draw_ascii_window(ctx, GRect(10, 50, 180, 86), "TIME");
+  // Draw TIME and DATE windows ("TIME (+5:30)" while the secondary zone shows)
+  char time_title[20];
+  build_time_window_title(time_title, sizeof(time_title));
+  draw_ascii_window(ctx, GRect(10, 50, 180, 86), time_title);
   draw_ascii_window(ctx, GRect(10, 142, 180, 36), "DATE");
 
   // Draw parameterized ASCII windows

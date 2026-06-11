@@ -196,6 +196,24 @@ typedef struct {
 #define MESSAGE_KEY_SLOT_4 115
 #define MESSAGE_KEY_SLOT_5 116
 #define MESSAGE_KEY_UTC_OFFSET 117
+#define MESSAGE_KEY_SECONDARY_TZ 118
+
+// --- Touch (Pebble Time 2; SDK 4.9+) ---
+#define PBL_TOUCH 1
+
+typedef enum { TouchEvent_Touchdown, TouchEvent_Liftoff, TouchEvent_PositionUpdate } TouchEventType;
+
+typedef struct {
+  TouchEventType type;
+  int16_t x;
+  int16_t y;
+} TouchEvent;
+
+typedef void (*TouchServiceHandler)(const TouchEvent* event, void* context);
+
+void touch_service_subscribe(TouchServiceHandler handler, void* context);
+void touch_service_unsubscribe(void);
+bool touch_service_is_enabled(void);
 
 // --- Function Prototypes ---
 void app_event_loop(void);
@@ -253,6 +271,10 @@ extern int mock_outbox_sends;
 void mock_dict_reset(void);
 void mock_dict_add_int(uint32_t key, int32_t value);
 void mock_dict_add_cstring(uint32_t key, const char* str);
+extern bool mock_touch_enabled;
+extern int mock_touch_subscribe_count;
+extern int mock_touch_unsubscribe_count;
+void mock_touch_fire(TouchEventType type, int16_t x, int16_t y);
 TextLayer* text_layer_create(GRect frame);
 void text_layer_destroy(TextLayer* text_layer);
 Layer* text_layer_get_layer(TextLayer* text_layer);
