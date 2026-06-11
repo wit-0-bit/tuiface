@@ -521,6 +521,89 @@ void test_handle_bluetooth_should_vibrate_only_on_disconnect_transition(void) {
   TEST_ASSERT_EQUAL_INT(2, mock_vibes_count);
 }
 
+// update_time() (called at the end of inbox_received_callback) requests
+// weather itself when the wall-clock minute is :00 or :30; account for that
+// so the outbox assertions don't flake twice an hour.
+static int expected_tick_fetches(void) {
+  time_t now = time(NULL);
+  struct tm* t = localtime(&now);
+  return (t->tm_min % 30 == 0) ? 1 : 0;
+}
+
+void test_inbox_should_parse_weather_payload_and_persist(void) {
+  mock_persist_reset();
+  mock_dict_reset();
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 72);
+  mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "SUN");
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_AQI, 42);
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_UV, 7);
+
+  inbox_received_callback(NULL, NULL);
+
+  TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
+  TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
+  TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
+  TEST_ASSERT_EQUAL_INT(7, s_weather_uv);
+
+  // A weather payload must persist the cache
+  TEST_ASSERT_TRUE(persist_exists(PERSIST_KEY_WEATHER_TIMESTAMP));
+  s_weather_temp = -999;
+  s_weather_aqi = -1;
+  TEST_ASSERT_TRUE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
+  TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
+}
+
+void test_inbox_settings_only_message_should_not_stamp_weather_cache(void) {
+  mock_persist_reset();
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SETTINGS_THEME, "2");
+
+  inbox_received_callback(NULL, NULL);
+
+  TEST_ASSERT_EQUAL_INT(2, s_settings_theme);
+  TEST_ASSERT_EQUAL_INT(2, persist_read_int(MESSAGE_KEY_SETTINGS_THEME));
+  TEST_ASSERT_FALSE(persist_exists(PERSIST_KEY_WEATHER_TIMESTAMP));
+}
+
+void test_inbox_should_parse_slot_assignments(void) {
+  mock_persist_reset();
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SLOT_1, "16");  // Clay sends strings
+  mock_dict_add_int(MESSAGE_KEY_SLOT_5, 17);
+
+  inbox_received_callback(NULL, NULL);
+
+  TEST_ASSERT_EQUAL_INT(DATA_SOURCE_AQI, s_complication_slots[0].source);
+  TEST_ASSERT_EQUAL_INT(DATA_SOURCE_UV, s_complication_slots[4].source);
+  TEST_ASSERT_EQUAL_INT(16, persist_read_int(MESSAGE_KEY_SLOT_1));
+  TEST_ASSERT_EQUAL_INT(17, persist_read_int(MESSAGE_KEY_SLOT_5));
+
+  // Restore defaults so later tests see the boot layout
+  s_complication_slots[0].source = DATA_SOURCE_WEATHER;
+  s_complication_slots[4].source = DATA_SOURCE_BLUETOOTH;
+}
+
+void test_inbox_units_change_should_trigger_weather_refetch(void) {
+  mock_persist_reset();
+
+  // Imperial -> Metric: expect one refetch so temps arrive in the new unit
+  s_settings_units = 0;
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SETTINGS_UNITS, "1");
+  int before = mock_outbox_sends;
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_EQUAL_INT(1, s_settings_units);
+  TEST_ASSERT_EQUAL_INT(before + 1 + expected_tick_fetches(), mock_outbox_sends);
+
+  // Same units again: no refetch
+  mock_dict_reset();
+  mock_dict_add_cstring(MESSAGE_KEY_SETTINGS_UNITS, "1");
+  before = mock_outbox_sends;
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_EQUAL_INT(before + expected_tick_fetches(), mock_outbox_sends);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -547,5 +630,9 @@ int main(void) {
   RUN_TEST(test_settings_persistence_is_decoupled_from_message_key_ids);
   RUN_TEST(test_update_health_info_should_read_heart_rate);
   RUN_TEST(test_handle_bluetooth_should_vibrate_only_on_disconnect_transition);
+  RUN_TEST(test_inbox_should_parse_weather_payload_and_persist);
+  RUN_TEST(test_inbox_settings_only_message_should_not_stamp_weather_cache);
+  RUN_TEST(test_inbox_should_parse_slot_assignments);
+  RUN_TEST(test_inbox_units_change_should_trigger_weather_refetch);
   return UNITY_END();
 }

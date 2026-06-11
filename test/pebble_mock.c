@@ -1,4 +1,5 @@
 #include "pebble.h"
+#include <assert.h>
 #include <stdarg.h>
 
 // Mock Data
@@ -8,8 +9,15 @@ bool mock_persist_exists[256];
 // Implementations
 void app_event_loop(void) {}
 void app_message_open(uint32_t size_inbound, uint32_t size_outbound) {}
-void app_message_outbox_begin(DictionaryIterator** iterator) {}
-void app_message_outbox_send(void) {}
+
+int mock_outbox_sends = 0;
+void app_message_outbox_begin(DictionaryIterator** iterator) {
+  static int dummy;  // app code only checks the iterator for NULL
+  *iterator = (DictionaryIterator*)&dummy;
+}
+void app_message_outbox_send(void) {
+  mock_outbox_sends++;
+}
 void app_message_register_inbox_dropped(void (*callback)(AppMessageResult reason, void* context)) {}
 void app_message_register_inbox_received(void (*callback)(DictionaryIterator* iterator,
                                                           void* context)) {}
@@ -28,7 +36,44 @@ bool connection_service_peek_pebble_app_connection(void) {
 }
 void connection_service_subscribe(ConnectionHandlers handlers) {}
 
+// Scriptable inbound dictionary: tests stage tuples with mock_dict_add_*()
+// and dict_find() serves them back, so inbox_received_callback is testable.
+#define MOCK_DICT_MAX 16
+#define MOCK_DICT_TUPLE_BYTES 64
+static uint8_t mock_dict_storage[MOCK_DICT_MAX][MOCK_DICT_TUPLE_BYTES];
+static int mock_dict_count = 0;
+
+void mock_dict_reset(void) {
+  mock_dict_count = 0;
+}
+
+static Tuple* mock_dict_next_slot(uint32_t key) {
+  assert(mock_dict_count < MOCK_DICT_MAX);
+  Tuple* t = (Tuple*)mock_dict_storage[mock_dict_count++];
+  t->key = key;
+  return t;
+}
+
+void mock_dict_add_int(uint32_t key, int32_t value) {
+  Tuple* t = mock_dict_next_slot(key);
+  t->type = TUPLE_INT;
+  t->length = 4;
+  t->value->int32 = value;
+}
+
+void mock_dict_add_cstring(uint32_t key, const char* str) {
+  Tuple* t = mock_dict_next_slot(key);
+  assert(strlen(str) < MOCK_DICT_TUPLE_BYTES - sizeof(Tuple));
+  t->type = TUPLE_CSTRING;
+  t->length = strlen(str) + 1;
+  strcpy(t->value->cstring, str);
+}
+
 Tuple* dict_find(const DictionaryIterator* iter, uint32_t key) {
+  for (int i = 0; i < mock_dict_count; i++) {
+    Tuple* t = (Tuple*)mock_dict_storage[i];
+    if (t->key == key) return t;
+  }
   return NULL;
 }
 void dict_write_uint8(DictionaryIterator* iter, uint32_t key, uint8_t value) {}

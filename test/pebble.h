@@ -245,9 +245,14 @@ int32_t persist_read_int(const uint32_t key);
 void persist_write_int(const uint32_t key, const int32_t value);
 int persist_write_string(const uint32_t key, const char* cstring);
 int persist_read_string(const uint32_t key, char* buffer, const size_t buffer_size);
-void mock_persist_reset(void);   // test helper, not part of the real SDK
-extern int32_t mock_heart_rate;  // test knob, not part of the real SDK
-extern int mock_vibes_count;     // test counter, not part of the real SDK
+// Test helpers/knobs below are not part of the real SDK
+void mock_persist_reset(void);
+extern int32_t mock_heart_rate;
+extern int mock_vibes_count;
+extern int mock_outbox_sends;
+void mock_dict_reset(void);
+void mock_dict_add_int(uint32_t key, int32_t value);
+void mock_dict_add_cstring(uint32_t key, const char* str);
 TextLayer* text_layer_create(GRect frame);
 void text_layer_destroy(TextLayer* text_layer);
 Layer* text_layer_get_layer(TextLayer* text_layer);

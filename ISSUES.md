@@ -11,7 +11,3 @@ in [TODOs.md](TODOs.md).
   returns an empty string. Dormant until those TODOs are implemented.
 - **`fix_config.py` / `update_config.py`** are one-off config mutators in the
   repo root; candidates for deletion or a `scripts/` folder.
-- **Test coverage gap:** `messaging.c`'s `inbox_received_callback()` is
-  untested (the mock `dict_find` always returns NULL); making it return
-  scripted tuples would let tests cover settings parsing and the
-  units-changed refetch path.
