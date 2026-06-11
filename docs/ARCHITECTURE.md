@@ -171,9 +171,7 @@ generated output. Neither is hand-edited.
 
 ## Miscellaneous
 
-- `fix_config.py` and `update_config.py` are one-off scripts that were used to
-  bulk-edit `src/pkjs/config.json` option lists; they are not part of the
-  build.
-- `TODOs.md` tracks planned complications and interactions.
-- `AGENTS.md` defines the collaboration ground rules for AI-assisted
-  development (discuss structural changes first, test exhaustively).
+- `TODOs.md` tracks planned complications and interactions; `ISSUES.md` tracks
+  known bugs.
+- `AGENTS.md` holds the project values, conventions, and hard rules for
+  contributors and AI agents.
