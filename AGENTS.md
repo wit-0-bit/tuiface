@@ -50,10 +50,14 @@ pebble install --phone <ip>           # install to a paired phone
 Unit tests run on the host — no SDK or emulator needed:
 
 ```sh
-cd test && make test
+make test            # format check + unit tests (top-level Makefile)
+make format          # apply clang-format to C and JS sources
 ```
 
-Run the tests after any change to `src/c/`. The emulator has no real health
+Formatting is enforced: `.clang-format` at the repo root, applied to `src/c/`,
+`src/pkjs/index.js`, and the test sources (not the unity submodule). CI
+(`.github/workflows/ci.yml`) runs the format check and the test suite on every
+push and PR. Run `make test` after any change to `src/c/`. The emulator has no real health
 data (steps/sleep/HR) and no phone weather unless the JS side runs, so logic
 verification happens in the unit tests, visual verification in the emulator.
 

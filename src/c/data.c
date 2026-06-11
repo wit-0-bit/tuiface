@@ -4,14 +4,14 @@
 
 // Sensor & System Data Cache
 int s_battery_level = 100;
-int s_step_count = -1;        // -1 indicates no data
+int s_step_count = -1;  // -1 indicates no data
 int s_step_goal = 10000;
-int s_sleep_seconds = -1;     // -1 indicates no data
-int s_heart_rate = 0;         // Default to 0 (displays "--" if no HRM is present)
-int s_weather_temp = -999;    // -999 indicates no data
+int s_sleep_seconds = -1;   // -1 indicates no data
+int s_heart_rate = 0;       // Default to 0 (displays "--" if no HRM is present)
+int s_weather_temp = -999;  // -999 indicates no data
 char s_weather_cond[16] = "--";
-int s_weather_aqi = -1;       // -1 indicates no data
-int s_weather_uv = -1;        // -1 indicates no data
+int s_weather_aqi = -1;  // -1 indicates no data
+int s_weather_uv = -1;   // -1 indicates no data
 int s_active_minutes = 0;
 int s_active_minutes_goal = 30;
 bool s_connected = true;
@@ -24,34 +24,49 @@ ComplicationDataSource s_left_sidebar_source = DATA_SOURCE_STEPS;
 ComplicationDataSource s_right_sidebar_source = DATA_SOURCE_BATTERY;
 
 ComplicationSlot s_complication_slots[NUM_SLOTS] = {
-  { .box_rect = {{10, 8}, {90, 36}}, .source = DATA_SOURCE_WEATHER },     // Top Left
-  { .box_rect = {{100, 8}, {90, 36}}, .source = DATA_SOURCE_SLEEP },      // Top Right
-  { .box_rect = {{10, 184}, {60, 36}}, .source = DATA_SOURCE_STEPS },     // Bottom Left
-  { .box_rect = {{70, 184}, {60, 36}}, .source = DATA_SOURCE_HEART_RATE }, // Bottom Center
-  { .box_rect = {{130, 184}, {60, 36}}, .source = DATA_SOURCE_BLUETOOTH }  // Bottom Right
+    {.box_rect = {{10, 8}, {90, 36}}, .source = DATA_SOURCE_WEATHER},       // Top Left
+    {.box_rect = {{100, 8}, {90, 36}}, .source = DATA_SOURCE_SLEEP},        // Top Right
+    {.box_rect = {{10, 184}, {60, 36}}, .source = DATA_SOURCE_STEPS},       // Bottom Left
+    {.box_rect = {{70, 184}, {60, 36}}, .source = DATA_SOURCE_HEART_RATE},  // Bottom Center
+    {.box_rect = {{130, 184}, {60, 36}}, .source = DATA_SOURCE_BLUETOOTH}   // Bottom Right
 };
 
 const char* get_source_label(ComplicationDataSource source) {
   switch (source) {
-    case DATA_SOURCE_BATTERY: return "BATT";
-    case DATA_SOURCE_STEPS: return "STEP";
-    case DATA_SOURCE_SLEEP: return "SLEEP";
-    case DATA_SOURCE_WEATHER_TEMP: return "TEMP";
-    case DATA_SOURCE_WEATHER_COND: return "COND";
-    case DATA_SOURCE_WEATHER: return "WEATHER";
-    case DATA_SOURCE_HEART_RATE: return "BPM";
-    case DATA_SOURCE_DATE: return "DATE";
-    case DATA_SOURCE_BLUETOOTH: return "BT";
-    case DATA_SOURCE_ACTIVE_MINUTES: return "ACTV";
-    case DATA_SOURCE_AQI: return "AQI";
-    case DATA_SOURCE_UV: return "UV";
-    case DATA_SOURCE_AQI_UV: return "AQI/UV";
-    case DATA_SOURCE_EMPTY: return "";
-    default: return "???";
+    case DATA_SOURCE_BATTERY:
+      return "BATT";
+    case DATA_SOURCE_STEPS:
+      return "STEP";
+    case DATA_SOURCE_SLEEP:
+      return "SLEEP";
+    case DATA_SOURCE_WEATHER_TEMP:
+      return "TEMP";
+    case DATA_SOURCE_WEATHER_COND:
+      return "COND";
+    case DATA_SOURCE_WEATHER:
+      return "WEATHER";
+    case DATA_SOURCE_HEART_RATE:
+      return "BPM";
+    case DATA_SOURCE_DATE:
+      return "DATE";
+    case DATA_SOURCE_BLUETOOTH:
+      return "BT";
+    case DATA_SOURCE_ACTIVE_MINUTES:
+      return "ACTV";
+    case DATA_SOURCE_AQI:
+      return "AQI";
+    case DATA_SOURCE_UV:
+      return "UV";
+    case DATA_SOURCE_AQI_UV:
+      return "AQI/UV";
+    case DATA_SOURCE_EMPTY:
+      return "";
+    default:
+      return "???";
   }
 }
 
-void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, int *percent) {
+void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, int* percent) {
   if (percent) *percent = 0;
   val_buf[0] = '\0';
 
@@ -84,7 +99,7 @@ void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, 
         snprintf(val_buf, val_len, "%dh %dm", hrs, mins);
       }
       if (percent) {
-        *percent = s_sleep_seconds > 0 ? (s_sleep_seconds * 100) / 28800 : 0; // 8-hour goal
+        *percent = s_sleep_seconds > 0 ? (s_sleep_seconds * 100) / 28800 : 0;  // 8-hour goal
         if (*percent > 100) *percent = 100;
       }
       break;
@@ -168,7 +183,7 @@ void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, 
 }
 
 // Helper Functions
-void to_upper_str(char *str) {
+void to_upper_str(char* str) {
   for (int i = 0; str[i]; i++) {
     if (str[i] >= 'a' && str[i] <= 'z') {
       str[i] -= 32;
@@ -176,14 +191,17 @@ void to_upper_str(char *str) {
   }
 }
 
-int tuple_get_int(Tuple *tuple) {
+int tuple_get_int(Tuple* tuple) {
   if (!tuple) return 0;
   switch (tuple->type) {
     case TUPLE_INT:
     case TUPLE_UINT:
-      if (tuple->length == 1) return tuple->value->uint8;
-      else if (tuple->length == 2) return tuple->value->uint16;
-      else if (tuple->length == 4) return tuple->value->uint32;
+      if (tuple->length == 1)
+        return tuple->value->uint8;
+      else if (tuple->length == 2)
+        return tuple->value->uint16;
+      else if (tuple->length == 4)
+        return tuple->value->uint32;
       return 0;
     case TUPLE_CSTRING:
       return atoi(tuple->value->cstring);
@@ -192,20 +210,28 @@ int tuple_get_int(Tuple *tuple) {
   }
 }
 
-static void ordinal_suffix(int day, char *buf) {
+static void ordinal_suffix(int day, char* buf) {
   if (day >= 11 && day <= 13) {
     strcpy(buf, "th");
     return;
   }
   switch (day % 10) {
-    case 1:  strcpy(buf, "st"); break;
-    case 2:  strcpy(buf, "nd"); break;
-    case 3:  strcpy(buf, "rd"); break;
-    default: strcpy(buf, "th"); break;
+    case 1:
+      strcpy(buf, "st");
+      break;
+    case 2:
+      strcpy(buf, "nd");
+      break;
+    case 3:
+      strcpy(buf, "rd");
+      break;
+    default:
+      strcpy(buf, "th");
+      break;
   }
 }
 
-void format_date_string(int format, struct tm *tick_time, char *buffer, int buf_size) {
+void format_date_string(int format, struct tm* tick_time, char* buffer, int buf_size) {
   if (format == 0) {
     // TUE 2026-06-09
     strftime(buffer, buf_size, "%a %Y-%m-%d", tick_time);
@@ -219,18 +245,18 @@ void format_date_string(int format, struct tm *tick_time, char *buffer, int buf_
     char weekday_buf[8];
     char month_buf[16];
     char year_buf[8];
-    
+
     strftime(weekday_buf, sizeof(weekday_buf), "%a", tick_time);
     strftime(month_buf, sizeof(month_buf), "%B", tick_time);
     strftime(year_buf, sizeof(year_buf), "%Y", tick_time);
-    
+
     to_upper_str(weekday_buf);
     to_upper_str(month_buf);
 
     char suffix[3];
     ordinal_suffix(tick_time->tm_mday, suffix);
 
-    snprintf(buffer, buf_size, "%s %s %d%s, %s", 
-             weekday_buf, month_buf, tick_time->tm_mday, suffix, year_buf);
+    snprintf(buffer, buf_size, "%s %s %d%s, %s", weekday_buf, month_buf, tick_time->tm_mday, suffix,
+             year_buf);
   }
 }

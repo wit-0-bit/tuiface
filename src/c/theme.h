@@ -19,7 +19,7 @@ typedef struct {
   GColor status_red;
 } WatchTheme;
 
-extern const WatchTheme *s_active_theme;
+extern const WatchTheme* s_active_theme;
 
 extern const WatchTheme s_theme_night;
 extern const WatchTheme s_theme_day;

@@ -17,12 +17,21 @@ typedef struct TextLayer TextLayer;
 typedef struct GContext GContext;
 typedef struct DictionaryIterator DictionaryIterator;
 
-typedef struct { int x; int y; } GPoint;
-typedef struct { int w; int h; } GSize;
-typedef struct { GPoint origin; GSize size; } GRect;
+typedef struct {
+  int x;
+  int y;
+} GPoint;
+typedef struct {
+  int w;
+  int h;
+} GSize;
+typedef struct {
+  GPoint origin;
+  GSize size;
+} GRect;
 
-#define GRect(x,y,w,h) ((GRect){{(x),(y)},{(w),(h)}})
-#define GPoint(x,y) ((GPoint){(x),(y)})
+#define GRect(x, y, w, h) ((GRect){{(x), (y)}, {(w), (h)}})
+#define GPoint(x, y) ((GPoint){(x), (y)})
 
 typedef uint32_t GColor;
 #define GColorClear 0
@@ -42,11 +51,11 @@ typedef uint32_t GColor;
 #define GColorKellyGreen 14
 #define GColorGreen 15
 #define GColorYellow 16
-static inline GColor GColorFromRGB(int r, int g, int b) { return (GColor)0; }
+static inline GColor GColorFromRGB(int r, int g, int b) {
+  return (GColor)0;
+}
 
-typedef enum {
-  GCornerNone = 0
-} GCornerMask;
+typedef enum { GCornerNone = 0 } GCornerMask;
 
 typedef enum {
   GTextOverflowModeWordWrap,
@@ -54,11 +63,7 @@ typedef enum {
   GTextOverflowModeFill
 } GTextOverflowMode;
 
-typedef enum {
-  GTextAlignmentLeft,
-  GTextAlignmentCenter,
-  GTextAlignmentRight
-} GTextAlignment;
+typedef enum { GTextAlignmentLeft, GTextAlignmentCenter, GTextAlignmentRight } GTextAlignment;
 
 typedef const void* GFont;
 typedef int32_t HealthValue;
@@ -159,10 +164,10 @@ typedef enum {
 } TimeUnits;
 
 typedef struct {
-  void (*load)(Window *window);
-  void (*appear)(Window *window);
-  void (*disappear)(Window *window);
-  void (*unload)(Window *window);
+  void (*load)(Window* window);
+  void (*appear)(Window* window);
+  void (*disappear)(Window* window);
+  void (*unload)(Window* window);
 } WindowHandlers;
 
 #define APP_LOG_LEVEL_ERROR 1
@@ -195,62 +200,70 @@ typedef struct {
 // --- Function Prototypes ---
 void app_event_loop(void);
 void app_message_open(uint32_t size_inbound, uint32_t size_outbound);
-void app_message_outbox_begin(DictionaryIterator **iterator);
+void app_message_outbox_begin(DictionaryIterator** iterator);
 void app_message_outbox_send(void);
-void app_message_register_inbox_dropped(void (*callback)(AppMessageResult reason, void *context));
-void app_message_register_inbox_received(void (*callback)(DictionaryIterator *iterator, void *context));
+void app_message_register_inbox_dropped(void (*callback)(AppMessageResult reason, void* context));
+void app_message_register_inbox_received(void (*callback)(DictionaryIterator* iterator,
+                                                          void* context));
 BatteryChargeState battery_state_service_peek(void);
 void battery_state_service_subscribe(void (*handler)(BatteryChargeState charge));
 bool clock_is_24h_style(void);
 bool connection_service_peek_pebble_app_connection(void);
 void connection_service_subscribe(ConnectionHandlers handlers);
-Tuple *dict_find(const DictionaryIterator *iter, uint32_t key);
-void dict_write_uint8(DictionaryIterator *iter, uint32_t key, uint8_t value);
-GFont fonts_get_system_font(const char *font_key);
-void graphics_context_set_fill_color(GContext *ctx, GColor color);
-void graphics_context_set_stroke_color(GContext *ctx, GColor color);
-void graphics_context_set_stroke_width(GContext *ctx, uint8_t stroke_width);
-void graphics_context_set_text_color(GContext *ctx, GColor color);
-void graphics_draw_line(GContext *ctx, GPoint p0, GPoint p1);
-void graphics_draw_text(GContext *ctx, const char *text, GFont font, GRect box, GTextOverflowMode overflow_mode, GTextAlignment alignment, GContext *layout_cache);
-void graphics_fill_rect(GContext *ctx, GRect rect, uint16_t corner_radius, GCornerMask corner_mask);
-void health_service_events_subscribe(void (*handler)(HealthEventType event, void *context), void *context);
+Tuple* dict_find(const DictionaryIterator* iter, uint32_t key);
+void dict_write_uint8(DictionaryIterator* iter, uint32_t key, uint8_t value);
+GFont fonts_get_system_font(const char* font_key);
+void graphics_context_set_fill_color(GContext* ctx, GColor color);
+void graphics_context_set_stroke_color(GContext* ctx, GColor color);
+void graphics_context_set_stroke_width(GContext* ctx, uint8_t stroke_width);
+void graphics_context_set_text_color(GContext* ctx, GColor color);
+void graphics_draw_line(GContext* ctx, GPoint p0, GPoint p1);
+void graphics_draw_text(GContext* ctx, const char* text, GFont font, GRect box,
+                        GTextOverflowMode overflow_mode, GTextAlignment alignment,
+                        GContext* layout_cache);
+void graphics_fill_rect(GContext* ctx, GRect rect, uint16_t corner_radius, GCornerMask corner_mask);
+void health_service_events_subscribe(void (*handler)(HealthEventType event, void* context),
+                                     void* context);
 void health_service_events_unsubscribe(void);
-HealthServiceAccessibilityMask health_service_metric_accessible(HealthMetric metric, time_t time_start, time_t time_end);
-HealthServiceAccessibilityMask health_service_metric_averaged_accessible(HealthMetric metric, time_t time_start, time_t time_end, HealthServiceTimeScope scope);
+HealthServiceAccessibilityMask health_service_metric_accessible(HealthMetric metric,
+                                                                time_t time_start, time_t time_end);
+HealthServiceAccessibilityMask health_service_metric_averaged_accessible(
+    HealthMetric metric, time_t time_start, time_t time_end, HealthServiceTimeScope scope);
 int32_t health_service_peek_current_value(HealthMetric metric);
-int32_t health_service_sum_averaged(HealthMetric metric, time_t time_start, time_t time_end, HealthServiceTimeScope scope);
+int32_t health_service_sum_averaged(HealthMetric metric, time_t time_start, time_t time_end,
+                                    HealthServiceTimeScope scope);
 int32_t health_service_sum_today(HealthMetric metric);
-void layer_add_child(Layer *parent, Layer *child);
-Layer *layer_create(GRect frame);
-void layer_destroy(Layer *layer);
-GRect layer_get_bounds(Layer *layer);
-void layer_mark_dirty(Layer *layer);
-void layer_set_hidden(Layer *layer, bool hidden);
-void layer_set_update_proc(Layer *layer, void (*update_proc)(Layer *layer, GContext *ctx));
+void layer_add_child(Layer* parent, Layer* child);
+Layer* layer_create(GRect frame);
+void layer_destroy(Layer* layer);
+GRect layer_get_bounds(Layer* layer);
+void layer_mark_dirty(Layer* layer);
+void layer_set_hidden(Layer* layer, bool hidden);
+void layer_set_update_proc(Layer* layer, void (*update_proc)(Layer* layer, GContext* ctx));
 bool persist_exists(const uint32_t key);
 int32_t persist_read_int(const uint32_t key);
 void persist_write_int(const uint32_t key, const int32_t value);
-int persist_write_string(const uint32_t key, const char *cstring);
-int persist_read_string(const uint32_t key, char *buffer, const size_t buffer_size);
-void mock_persist_reset(void); // test helper, not part of the real SDK
-extern int32_t mock_heart_rate; // test knob, not part of the real SDK
-extern int mock_vibes_count; // test counter, not part of the real SDK
-TextLayer *text_layer_create(GRect frame);
-void text_layer_destroy(TextLayer *text_layer);
-Layer *text_layer_get_layer(TextLayer *text_layer);
-void text_layer_set_background_color(TextLayer *text_layer, GColor color);
-void text_layer_set_font(TextLayer *text_layer, GFont font);
-void text_layer_set_text(TextLayer *text_layer, const char *text);
-void text_layer_set_text_alignment(TextLayer *text_layer, GTextAlignment text_alignment);
-void text_layer_set_text_color(TextLayer *text_layer, GColor color);
-void tick_timer_service_subscribe(TimeUnits tick_units, void (*handler)(struct tm *tick_time, TimeUnits units_changed));
+int persist_write_string(const uint32_t key, const char* cstring);
+int persist_read_string(const uint32_t key, char* buffer, const size_t buffer_size);
+void mock_persist_reset(void);   // test helper, not part of the real SDK
+extern int32_t mock_heart_rate;  // test knob, not part of the real SDK
+extern int mock_vibes_count;     // test counter, not part of the real SDK
+TextLayer* text_layer_create(GRect frame);
+void text_layer_destroy(TextLayer* text_layer);
+Layer* text_layer_get_layer(TextLayer* text_layer);
+void text_layer_set_background_color(TextLayer* text_layer, GColor color);
+void text_layer_set_font(TextLayer* text_layer, GFont font);
+void text_layer_set_text(TextLayer* text_layer, const char* text);
+void text_layer_set_text_alignment(TextLayer* text_layer, GTextAlignment text_alignment);
+void text_layer_set_text_color(TextLayer* text_layer, GColor color);
+void tick_timer_service_subscribe(TimeUnits tick_units,
+                                  void (*handler)(struct tm* tick_time, TimeUnits units_changed));
 time_t time_start_of_today(void);
 void vibes_double_pulse(void);
-Window *window_create(void);
-void window_destroy(Window *window);
-Layer *window_get_root_layer(Window *window);
-void window_set_background_color(Window *window, GColor background_color);
-void window_set_window_handlers(Window *window, WindowHandlers handlers);
-void window_stack_push(Window *window, bool animated);
+Window* window_create(void);
+void window_destroy(Window* window);
+Layer* window_get_root_layer(Window* window);
+void window_set_background_color(Window* window, GColor background_color);
+void window_set_window_handlers(Window* window, WindowHandlers handlers);
+void window_stack_push(Window* window, bool animated);
 void APP_LOG(uint8_t level, const char* fmt, ...);

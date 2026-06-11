@@ -11,14 +11,13 @@ var UV_WINDOW_HOURS = 12;
 
 function sendWeatherDict(dict, logLabel) {
   try {
-    localStorage.setItem('weather-cache', JSON.stringify({ payload: dict, fetchedAt: Date.now() }));
+    localStorage.setItem('weather-cache', JSON.stringify({payload: dict, fetchedAt: Date.now()}));
   } catch (e) {
     console.log('Error writing weather cache: ' + e);
   }
-  Pebble.sendAppMessage(dict,
-    function(e) { console.log(logLabel + ' sent successfully!'); },
-    function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
-  );
+  Pebble.sendAppMessage(
+      dict, function(e) { console.log(logLabel + ' sent successfully!'); },
+      function(e) { console.log('Error sending: ' + JSON.stringify(e)); });
 }
 
 function readFreshWeatherCache() {
@@ -41,10 +40,9 @@ Pebble.addEventListener('ready', function(e) {
   var cached = readFreshWeatherCache();
   if (cached) {
     console.log('Weather cache fresh, resending cached payload');
-    Pebble.sendAppMessage(cached,
-      function(e) { console.log('Cached weather sent successfully!'); },
-      function(e) { console.log('Error sending: ' + JSON.stringify(e)); }
-    );
+    Pebble.sendAppMessage(
+        cached, function(e) { console.log('Cached weather sent successfully!'); },
+        function(e) { console.log('Error sending: ' + JSON.stringify(e)); });
   } else {
     getWeather();
   }
@@ -58,120 +56,122 @@ Pebble.addEventListener('appmessage', function(e) {
 
 function getWeather() {
   navigator.geolocation.getCurrentPosition(
-    function(position) {
-      var lat = position.coords.latitude;
-      var lon = position.coords.longitude;
+      function(position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
 
-      // Read units from Clay settings
-      var settings = {};
-      try {
-        settings = JSON.parse(localStorage.getItem('clay-settings')) || {};
-      } catch (e) {
-        console.log('Error reading clay settings: ' + e);
-      }
-      var units = settings['SETTINGS_UNITS'] || '0';
-      var tempUnit = (units === '1' || units === 1) ? 'celsius' : 'fahrenheit';
-
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&timezone=auto&temperature_unit=' + tempUnit + '&hourly=uv_index&forecast_hours=' + UV_WINDOW_HOURS;
-
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function () {
-        if (xhr.status === 200) {
-          try {
-            var json = JSON.parse(this.responseText);
-            var temp = Math.round(json.current_weather.temperature);
-            var code = json.current_weather.weathercode;
-            // -1 is the watch-side "no data" sentinel (renders as "--").
-            // forecast_hours already windows the hourly data to the next
-            // UV_WINDOW_HOURS starting at the current hour; the timestamp
-            // guard keeps us honest if the API ever returns a wider range.
-            var uv = -1;
-            if (json.hourly && json.hourly.uv_index && json.hourly.time) {
-              var windowStart = Date.now() - 3600 * 1000; // include the in-progress hour
-              var windowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
-              for (var i = 0; i < json.hourly.uv_index.length; i++) {
-                var v = json.hourly.uv_index[i];
-                var t = new Date(json.hourly.time[i]).getTime();
-                if (typeof v === 'number' && t >= windowStart && t <= windowEnd && v > uv) {
-                  uv = v;
-                }
-              }
-              if (uv >= 0) uv = Math.round(uv);
-            }
-            
-            var cond = "SUN";
-            if (code === 0) {
-              cond = "SUN";
-            } else if (code >= 1 && code <= 3) {
-              cond = "CLD";
-            } else if (code === 45 || code === 48) {
-              cond = "FOG";
-            } else if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65) || (code >= 80 && code <= 82)) {
-              cond = "RAIN";
-            } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
-              cond = "SNOW";
-            } else if (code >= 95) {
-              cond = "TSTM";
-            } else {
-              cond = "CLD";
-            }
-
-            // Fetch AQI from Air Quality API
-            var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi';
-            var aqiXhr = new XMLHttpRequest();
-            aqiXhr.onload = function() {
-              var aqi = -1;
-              if (aqiXhr.status === 200) {
-                try {
-                  var aqiJson = JSON.parse(this.responseText);
-                  if (aqiJson.current && aqiJson.current.us_aqi !== undefined) {
-                    aqi = Math.round(aqiJson.current.us_aqi);
-                  }
-                } catch(e) {
-                  console.log('Error parsing AQI: ' + e);
-                }
-              }
-              
-              sendWeatherDict({
-                'WEATHER_TEMP': temp,
-                'WEATHER_COND': cond,
-                'WEATHER_AQI': aqi,
-                'WEATHER_UV': uv
-              }, 'Weather, AQI & UV');
-            };
-            aqiXhr.onerror = function() {
-              sendWeatherDict({
-                'WEATHER_TEMP': temp,
-                'WEATHER_COND': cond,
-                'WEATHER_AQI': -1,
-                'WEATHER_UV': uv
-              }, 'Weather & UV (no AQI)');
-            };
-            aqiXhr.ontimeout = aqiXhr.onerror;
-            aqiXhr.open('GET', aqiUrl);
-            aqiXhr.timeout = 10000;
-            aqiXhr.send();
-
-          } catch(e) {
-            console.log('Error parsing weather JSON: ' + e);
-          }
-        } else {
-          console.log('Weather HTTP request failed with status: ' + xhr.status);
+        // Read units from Clay settings
+        var settings = {};
+        try {
+          settings = JSON.parse(localStorage.getItem('clay-settings')) || {};
+        } catch (e) {
+          console.log('Error reading clay settings: ' + e);
         }
-      };
-      xhr.onerror = function() {
-        console.log('Weather HTTP request failed (network error)');
-      };
-      xhr.ontimeout = function() {
-        console.log('Weather HTTP request timed out');
-      };
-      xhr.open('GET', url);
-      xhr.timeout = 10000;
-      xhr.send();
-    },
-    function(err) {
-      console.log('Error getting location: ' + err.message);
-    },
-    { timeout: 15000, maximumAge: 60000 }
-  );
+        var units = settings['SETTINGS_UNITS'] || '0';
+        var tempUnit = (units === '1' || units === 1) ? 'celsius' : 'fahrenheit';
+
+        var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+            '&current_weather=true&timezone=auto&temperature_unit=' + tempUnit +
+            '&hourly=uv_index&forecast_hours=' + UV_WINDOW_HOURS;
+
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            try {
+              var json = JSON.parse(this.responseText);
+              var temp = Math.round(json.current_weather.temperature);
+              var code = json.current_weather.weathercode;
+              // -1 is the watch-side "no data" sentinel (renders as "--").
+              // forecast_hours already windows the hourly data to the next
+              // UV_WINDOW_HOURS starting at the current hour; the timestamp
+              // guard keeps us honest if the API ever returns a wider range.
+              var uv = -1;
+              if (json.hourly && json.hourly.uv_index && json.hourly.time) {
+                var windowStart = Date.now() - 3600 * 1000;  // include the in-progress hour
+                var windowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
+                for (var i = 0; i < json.hourly.uv_index.length; i++) {
+                  var v = json.hourly.uv_index[i];
+                  var t = new Date(json.hourly.time[i]).getTime();
+                  if (typeof v === 'number' && t >= windowStart && t <= windowEnd && v > uv) {
+                    uv = v;
+                  }
+                }
+                if (uv >= 0) uv = Math.round(uv);
+              }
+
+              var cond = 'SUN';
+              if (code === 0) {
+                cond = 'SUN';
+              } else if (code >= 1 && code <= 3) {
+                cond = 'CLD';
+              } else if (code === 45 || code === 48) {
+                cond = 'FOG';
+              } else if (
+                  (code >= 51 && code <= 55) || (code >= 61 && code <= 65) ||
+                  (code >= 80 && code <= 82)) {
+                cond = 'RAIN';
+              } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
+                cond = 'SNOW';
+              } else if (code >= 95) {
+                cond = 'TSTM';
+              } else {
+                cond = 'CLD';
+              }
+
+              // Fetch AQI from Air Quality API
+              var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat +
+                  '&longitude=' + lon + '&current=us_aqi';
+              var aqiXhr = new XMLHttpRequest();
+              aqiXhr.onload = function() {
+                var aqi = -1;
+                if (aqiXhr.status === 200) {
+                  try {
+                    var aqiJson = JSON.parse(this.responseText);
+                    if (aqiJson.current && aqiJson.current.us_aqi !== undefined) {
+                      aqi = Math.round(aqiJson.current.us_aqi);
+                    }
+                  } catch (e) {
+                    console.log('Error parsing AQI: ' + e);
+                  }
+                }
+
+                sendWeatherDict(
+                    {
+                      'WEATHER_TEMP': temp,
+                      'WEATHER_COND': cond,
+                      'WEATHER_AQI': aqi,
+                      'WEATHER_UV': uv
+                    },
+                    'Weather, AQI & UV');
+              };
+              aqiXhr.onerror = function() {
+                sendWeatherDict(
+                    {
+                      'WEATHER_TEMP': temp,
+                      'WEATHER_COND': cond,
+                      'WEATHER_AQI': -1,
+                      'WEATHER_UV': uv
+                    },
+                    'Weather & UV (no AQI)');
+              };
+              aqiXhr.ontimeout = aqiXhr.onerror;
+              aqiXhr.open('GET', aqiUrl);
+              aqiXhr.timeout = 10000;
+              aqiXhr.send();
+
+            } catch (e) {
+              console.log('Error parsing weather JSON: ' + e);
+            }
+          } else {
+            console.log('Weather HTTP request failed with status: ' + xhr.status);
+          }
+        };
+        xhr.onerror = function() { console.log('Weather HTTP request failed (network error)'); };
+        xhr.ontimeout = function() { console.log('Weather HTTP request timed out'); };
+        xhr.open('GET', url);
+        xhr.timeout = 10000;
+        xhr.send();
+      },
+      function(err) { console.log('Error getting location: ' + err.message); },
+      {timeout: 15000, maximumAge: 60000});
 }

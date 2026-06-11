@@ -14,5 +14,5 @@ void save_weather_cache(void);
 bool load_weather_cache(void);
 
 void request_weather();
-void inbox_received_callback(DictionaryIterator *iterator, void *context);
-void inbox_dropped_callback(AppMessageResult reason, void *context);
+void inbox_received_callback(DictionaryIterator* iterator, void* context);
+void inbox_dropped_callback(AppMessageResult reason, void* context);

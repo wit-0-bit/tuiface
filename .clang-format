@@ -1,0 +1,7 @@
+# Matches the project's existing style: 2-space indent, attached braces.
+BasedOnStyle: Google
+ColumnLimit: 100
+IndentWidth: 2
+# Keep include order stable — pebble.h must stay first in the app sources.
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: Inline

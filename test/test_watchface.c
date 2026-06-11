@@ -12,8 +12,8 @@
 
 void setUp(void) {
   // Reset any global states if needed before each test
-  s_settings_theme = 0; // Auto
-  s_settings_units = 0; // Imperial
+  s_settings_theme = 0;  // Auto
+  s_settings_units = 0;  // Imperial
   s_battery_level = 100;
   s_step_count = -1;
   s_sleep_seconds = -1;
@@ -23,8 +23,7 @@ void setUp(void) {
   s_connected = true;
 }
 
-void tearDown(void) {
-}
+void tearDown(void) {}
 
 // -----------------------------------------------------------------------------
 // Tests
@@ -38,7 +37,7 @@ void test_to_upper_str_should_convert_lowercase_to_uppercase(void) {
   char str2[] = "Mon";
   to_upper_str(str2);
   TEST_ASSERT_EQUAL_STRING("MON", str2);
-  
+
   char str3[] = "ALREADY_UPPER";
   to_upper_str(str3);
   TEST_ASSERT_EQUAL_STRING("ALREADY_UPPER", str3);
@@ -47,13 +46,13 @@ void test_to_upper_str_should_convert_lowercase_to_uppercase(void) {
 void test_tuple_get_int_should_parse_strings_and_ints(void) {
   // We mock a tuple since we know its memory layout
   uint8_t buffer1[sizeof(Tuple) + 8];
-  Tuple *t1 = (Tuple*)buffer1;
+  Tuple* t1 = (Tuple*)buffer1;
   t1->type = TUPLE_CSTRING;
   strcpy(t1->value->cstring, "42");
   TEST_ASSERT_EQUAL_INT(42, tuple_get_int(t1));
 
   uint8_t buffer2[sizeof(Tuple) + 4];
-  Tuple *t2 = (Tuple*)buffer2;
+  Tuple* t2 = (Tuple*)buffer2;
   t2->type = TUPLE_INT;
   t2->length = 4;
   t2->value->int32 = 1234;
@@ -75,7 +74,7 @@ void test_get_source_label_should_return_correct_labels(void) {
 void test_get_source_data_should_format_battery(void) {
   char buf[16];
   int percent = 0;
-  
+
   s_battery_level = 85;
   get_source_data(DATA_SOURCE_BATTERY, buf, sizeof(buf), &percent);
   TEST_ASSERT_EQUAL_STRING("85%", buf);
@@ -85,7 +84,7 @@ void test_get_source_data_should_format_battery(void) {
 void test_get_source_data_should_format_steps(void) {
   char buf[16];
   int percent = 0;
-  
+
   s_step_goal = 10000;
 
   // No data
@@ -104,12 +103,12 @@ void test_get_source_data_should_format_steps(void) {
   s_step_count = 12500;
   get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
   TEST_ASSERT_EQUAL_STRING("12.5k", buf);
-  TEST_ASSERT_EQUAL_INT(100, percent); // capped at 100%
+  TEST_ASSERT_EQUAL_INT(100, percent);  // capped at 100%
 }
 
 void test_get_source_data_should_format_weather(void) {
   char buf[32];
-  
+
   // No data
   s_weather_temp = -999;
   strcpy(s_weather_cond, "--");
@@ -134,7 +133,7 @@ void test_get_source_data_should_format_weather(void) {
 void test_get_source_data_should_format_sleep(void) {
   char buf[16];
   int percent = 0;
-  
+
   // No data
   s_sleep_seconds = -1;
   get_source_data(DATA_SOURCE_SLEEP, buf, sizeof(buf), &percent);
@@ -148,14 +147,14 @@ void test_get_source_data_should_format_sleep(void) {
   TEST_ASSERT_EQUAL_INT((s_sleep_seconds * 100) / 28800, percent);
 
   // Over goal
-  s_sleep_seconds = 10 * 3600; // 10 hours
+  s_sleep_seconds = 10 * 3600;  // 10 hours
   get_source_data(DATA_SOURCE_SLEEP, buf, sizeof(buf), &percent);
-  TEST_ASSERT_EQUAL_INT(100, percent); // capped at 100%
+  TEST_ASSERT_EQUAL_INT(100, percent);  // capped at 100%
 }
 
 void test_get_source_data_should_format_weather_temp_and_cond(void) {
   char buf[16];
-  
+
   // Temp no data
   s_weather_temp = -999;
   get_source_data(DATA_SOURCE_WEATHER_TEMP, buf, sizeof(buf), NULL);
@@ -217,9 +216,9 @@ void test_get_source_data_should_format_bluetooth(void) {
 void test_get_source_data_should_format_active_minutes(void) {
   char buf[16];
   int percent = 0;
-  
+
   s_active_minutes_goal = 30;
-  
+
   s_active_minutes = 15;
   get_source_data(DATA_SOURCE_ACTIVE_MINUTES, buf, sizeof(buf), &percent);
   TEST_ASSERT_EQUAL_STRING("15m", buf);
@@ -241,13 +240,13 @@ void test_determine_theme_should_handle_all_configurations(void) {
   TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(2, 12));
 
   // Theme 0 = Auto
-  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 0));  // Midnight
-  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 5));  // 5 AM
-  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 6));    // 6 AM
-  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 12));   // Noon
-  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 17));   // 5 PM
-  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 18)); // 6 PM
-  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 23)); // 11 PM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 0));   // Midnight
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 5));   // 5 AM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 6));     // 6 AM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 12));    // Noon
+  TEST_ASSERT_EQUAL_PTR(&s_theme_day, determine_theme(0, 17));    // 5 PM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 18));  // 6 PM
+  TEST_ASSERT_EQUAL_PTR(&s_theme_night, determine_theme(0, 23));  // 11 PM
 }
 
 void test_format_date_string_should_handle_all_configurations(void) {
@@ -255,9 +254,9 @@ void test_format_date_string_should_handle_all_configurations(void) {
   struct tm tick_time;
   memset(&tick_time, 0, sizeof(tick_time));
   tick_time.tm_mday = 9;
-  tick_time.tm_mon = 5; // June (0-indexed)
-  tick_time.tm_year = 126; // 2026
-  tick_time.tm_wday = 2; // Tuesday
+  tick_time.tm_mon = 5;     // June (0-indexed)
+  tick_time.tm_year = 126;  // 2026
+  tick_time.tm_wday = 2;    // Tuesday
 
   // Format 0: Weekday + ISO
   format_date_string(0, &tick_time, buf, sizeof(buf));
@@ -274,7 +273,7 @@ void test_format_date_string_should_handle_all_configurations(void) {
 
 void test_get_source_data_should_format_aqi_and_uv(void) {
   char buf[16];
-  
+
   // AQI formatting
   s_weather_aqi = -1;
   get_source_data(DATA_SOURCE_AQI, buf, sizeof(buf), NULL);
@@ -357,12 +356,12 @@ void test_get_source_color_should_return_appropriate_colors(void) {
   s_weather_uv = 1;
   TEST_ASSERT_EQUAL_HEX(s_theme_day.status_green, get_source_color(DATA_SOURCE_AQI_UV));
 
-  s_weather_aqi = 65; // yellow
+  s_weather_aqi = 65;  // yellow
   s_weather_uv = 1;
   TEST_ASSERT_EQUAL_HEX(s_theme_day.status_yellow, get_source_color(DATA_SOURCE_AQI_UV));
 
   s_weather_aqi = 34;
-  s_weather_uv = 8; // red
+  s_weather_uv = 8;  // red
   TEST_ASSERT_EQUAL_HEX(s_theme_day.status_red, get_source_color(DATA_SOURCE_AQI_UV));
 }
 
@@ -454,18 +453,18 @@ void test_handle_bluetooth_should_vibrate_only_on_disconnect_transition(void) {
   mock_vibes_count = 0;
 
   s_connected = true;
-  handle_bluetooth(false); // genuine drop: buzz
+  handle_bluetooth(false);  // genuine drop: buzz
   TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
   TEST_ASSERT_FALSE(s_connected);
 
-  handle_bluetooth(false); // still disconnected (relaunch-while-away): silent
+  handle_bluetooth(false);  // still disconnected (relaunch-while-away): silent
   TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
 
-  handle_bluetooth(true); // reconnect: silent
+  handle_bluetooth(true);  // reconnect: silent
   TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
   TEST_ASSERT_TRUE(s_connected);
 
-  handle_bluetooth(false); // second genuine drop: buzz again
+  handle_bluetooth(false);  // second genuine drop: buzz again
   TEST_ASSERT_EQUAL_INT(2, mock_vibes_count);
 }
 

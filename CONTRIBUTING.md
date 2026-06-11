@@ -52,9 +52,11 @@ cd test && make test
    issue describing the problem and your intended approach. For pure bug
    fixes (see [ISSUES.md](ISSUES.md) for known ones), you can skip straight
    to the PR.
-2. **It comes with tests.** Everything testable gets tested — formatting,
-   thresholds, theme logic. Add cases to `test/test_watchface.c` and register
-   them with `RUN_TEST(...)`. `cd test && make test` must pass.
+2. **It comes with tests, and it's formatted.** Everything testable gets
+   tested — value formatting, thresholds, theme logic. Add cases to
+   `test/test_watchface.c` and register them with `RUN_TEST(...)`. Run
+   `make format` before committing; `make test` (clang-format check + unit
+   tests) must pass, and CI runs the same checks on every PR.
 3. **It respects the project values** in [AGENTS.md](AGENTS.md): TUI-like but
    legible, high-contrast themes, minimal configuration, utility over
    approachability. PRs that add settings face extra scrutiny — every option

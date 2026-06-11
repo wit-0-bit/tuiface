@@ -50,14 +50,14 @@ extern ComplicationDataSource s_right_sidebar_source;
 #define NUM_SLOTS 5
 typedef struct {
   GRect box_rect;
-  TextLayer *layer;
+  TextLayer* layer;
   ComplicationDataSource source;
 } ComplicationSlot;
 
 extern ComplicationSlot s_complication_slots[NUM_SLOTS];
 
-void get_source_data(ComplicationDataSource source, char *val_buf, int val_len, int *percent);
+void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, int* percent);
 const char* get_source_label(ComplicationDataSource source);
-void format_date_string(int format, struct tm *tick_time, char *buffer, int buf_size);
-void to_upper_str(char *str);
-int tuple_get_int(Tuple *tuple);
+void format_date_string(int format, struct tm* tick_time, char* buffer, int buf_size);
+void to_upper_str(char* str);
+int tuple_get_int(Tuple* tuple);
