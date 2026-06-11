@@ -9,3 +9,13 @@
 
 ## Interactions
 - [ ] Sustained touch / hold on the screen to temporarily display a secondary time zone over the main time (reverts instantly when released)
+  - Feasible on Pebble Time 2's touchscreen via the touch service:
+    `touch_service_subscribe()` delivers `TouchEvent_Touchdown` /
+    `TouchEvent_PositionUpdate` / `TouchEvent_Liftoff` — show the secondary
+    TZ on Touchdown, revert on Liftoff. Guard with `PBL_TOUCH` at compile
+    time and `touch_service_is_enabled()` at runtime (returns false on
+    non-touch platforms and when the user disables touch in Settings).
+    Subscribing powers the touch sensor on (and triggers backlight per
+    event), so subscribe in the window `appear` handler and unsubscribe on
+    `disappear` to limit battery cost.
+    Docs: <https://developer.repebble.com/guides/events-and-services/touch/>
