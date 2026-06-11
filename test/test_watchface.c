@@ -562,7 +562,7 @@ void test_inbox_settings_only_message_should_not_stamp_weather_cache(void) {
   inbox_received_callback(NULL, NULL);
 
   TEST_ASSERT_EQUAL_INT(2, s_settings_theme);
-  TEST_ASSERT_EQUAL_INT(2, persist_read_int(MESSAGE_KEY_SETTINGS_THEME));
+  TEST_ASSERT_EQUAL_INT(2, persist_read_int(PERSIST_KEY_SETTINGS_THEME));
   TEST_ASSERT_FALSE(persist_exists(PERSIST_KEY_WEATHER_TIMESTAMP));
 }
 
@@ -576,8 +576,8 @@ void test_inbox_should_parse_slot_assignments(void) {
 
   TEST_ASSERT_EQUAL_INT(DATA_SOURCE_AQI, s_complication_slots[0].source);
   TEST_ASSERT_EQUAL_INT(DATA_SOURCE_UV, s_complication_slots[4].source);
-  TEST_ASSERT_EQUAL_INT(16, persist_read_int(MESSAGE_KEY_SLOT_1));
-  TEST_ASSERT_EQUAL_INT(17, persist_read_int(MESSAGE_KEY_SLOT_5));
+  TEST_ASSERT_EQUAL_INT(16, persist_read_int(PERSIST_KEY_SLOT_1));
+  TEST_ASSERT_EQUAL_INT(17, persist_read_int(PERSIST_KEY_SLOT_5));
 
   // Restore defaults so later tests see the boot layout
   s_complication_slots[0].source = DATA_SOURCE_WEATHER;
