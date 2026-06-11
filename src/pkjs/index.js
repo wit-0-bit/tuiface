@@ -4,6 +4,22 @@ var clay = new Clay(clayConfig);
 
 var WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
+// A failed fetch is otherwise not retried until the next :00/:30 tick, which
+// leaves the watch blank for up to 30 minutes after a launch-time blip.
+var WEATHER_MAX_RETRIES = 2;
+var WEATHER_RETRY_DELAY_MS = 15 * 1000;
+
+function retryWeather(attempt, reason) {
+  if (attempt >= WEATHER_MAX_RETRIES) {
+    console.log('Weather fetch failed (' + reason + '); retries exhausted');
+    return;
+  }
+  console.log(
+      'Weather fetch failed (' + reason + '); retrying in ' + (WEATHER_RETRY_DELAY_MS / 1000) +
+      's');
+  setTimeout(function() { getWeather(attempt + 1); }, WEATHER_RETRY_DELAY_MS);
+}
+
 // The UV complication shows the peak over the coming window, not a calendar
 // day max (which is mostly about the past by evening) and not the instant
 // value (which reads 0 whenever the sun is low).
@@ -55,7 +71,8 @@ Pebble.addEventListener('appmessage', function(e) {
   getWeather();
 });
 
-function getWeather() {
+function getWeather(attempt) {
+  attempt = attempt || 0;
   navigator.geolocation.getCurrentPosition(
       function(position) {
         var lat = position.coords.latitude;
@@ -161,18 +178,18 @@ function getWeather() {
               aqiXhr.send();
 
             } catch (e) {
-              console.log('Error parsing weather JSON: ' + e);
+              retryWeather(attempt, 'parse error: ' + e);
             }
           } else {
-            console.log('Weather HTTP request failed with status: ' + xhr.status);
+            retryWeather(attempt, 'HTTP status ' + xhr.status);
           }
         };
-        xhr.onerror = function() { console.log('Weather HTTP request failed (network error)'); };
-        xhr.ontimeout = function() { console.log('Weather HTTP request timed out'); };
+        xhr.onerror = function() { retryWeather(attempt, 'network error'); };
+        xhr.ontimeout = function() { retryWeather(attempt, 'timeout'); };
         xhr.open('GET', url);
         xhr.timeout = 10000;
         xhr.send();
       },
-      function(err) { console.log('Error getting location: ' + err.message); },
+      function(err) { retryWeather(attempt, 'geolocation: ' + err.message); },
       {timeout: 15000, maximumAge: 60000});
 }
