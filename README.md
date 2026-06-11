@@ -93,6 +93,12 @@ cd test && make test
 
 Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
 
+## AI disclosure
+
+Textface was developed with extensive assistance from AI coding agents —
+Google's **Gemini** and Anthropic's **Claude** — under human direction and
+review. This includes code, tests, and documentation.
+
 ## License
 
 This project is licensed under the

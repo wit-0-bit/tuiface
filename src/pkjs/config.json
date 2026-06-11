@@ -306,6 +306,10 @@
       },
       {
         "type": "text",
+        "defaultValue": "Developed with extensive assistance from AI coding agents: Google Gemini and Anthropic Claude."
+      },
+      {
+        "type": "text",
         "defaultValue": "Textface is free for noncommercial use under the <a href='https://polyformproject.org/licenses/noncommercial/1.0.0'>PolyForm Noncommercial License 1.0.0</a>."
       }
     ]
