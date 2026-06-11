@@ -76,7 +76,8 @@ function getWeather() {
             var json = JSON.parse(this.responseText);
             var temp = Math.round(json.current_weather.temperature);
             var code = json.current_weather.weathercode;
-            var uv = 0;
+            // -1 is the watch-side "no data" sentinel (renders as "--")
+            var uv = -1;
             if (json.daily && json.daily.uv_index_max && json.daily.uv_index_max.length > 0) {
               uv = Math.round(json.daily.uv_index_max[0]);
             }
@@ -102,7 +103,7 @@ function getWeather() {
             var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi';
             var aqiXhr = new XMLHttpRequest();
             aqiXhr.onload = function() {
-              var aqi = 0;
+              var aqi = -1;
               if (aqiXhr.status === 200) {
                 try {
                   var aqiJson = JSON.parse(this.responseText);
@@ -125,11 +126,13 @@ function getWeather() {
               sendWeatherDict({
                 'WEATHER_TEMP': temp,
                 'WEATHER_COND': cond,
-                'WEATHER_AQI': 0,
+                'WEATHER_AQI': -1,
                 'WEATHER_UV': uv
               }, 'Weather & UV (no AQI)');
             };
+            aqiXhr.ontimeout = aqiXhr.onerror;
             aqiXhr.open('GET', aqiUrl);
+            aqiXhr.timeout = 10000;
             aqiXhr.send();
 
           } catch(e) {
@@ -139,7 +142,14 @@ function getWeather() {
           console.log('Weather HTTP request failed with status: ' + xhr.status);
         }
       };
+      xhr.onerror = function() {
+        console.log('Weather HTTP request failed (network error)');
+      };
+      xhr.ontimeout = function() {
+        console.log('Weather HTTP request timed out');
+      };
       xhr.open('GET', url);
+      xhr.timeout = 10000;
       xhr.send();
     },
     function(err) {

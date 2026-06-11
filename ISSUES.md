@@ -3,19 +3,6 @@
 Bugs and suspect behavior, ordered roughly by user impact. Feature ideas live
 in [TODOs.md](TODOs.md).
 
-## 4. JS sends 0 instead of "no data" for AQI and UV
-
-**Symptom:** When the AQI fetch fails or UV is missing from the forecast
-response, the watch shows a green `0` instead of `--`.
-
-**Cause:** `src/pkjs/index.js` initializes `uv = 0` and falls back to
-`WEATHER_AQI: 0` in the `onerror`/parse-failure paths. The watch side has
-proper `-1` sentinels (`data.c`) that render `--`, but they're unreachable —
-0 is a legitimate-looking value and colors green.
-
-**Fix direction:** Omit the keys (or send `-1`) when the value is unknown, and
-parse accordingly in `inbox_received_callback()`.
-
 ## 5. Double-pulse vibration on every launch while phone is disconnected
 
 **Symptom:** If the phone is out of range, the watch buzzes every time you
@@ -35,9 +22,6 @@ state, or set the initial state without going through the handler).
 - **UV shows daily max, not current UV.** The JS requests `uv_index_max`
   (today's peak). Fine if intentional, but the label "UV" suggests current
   conditions; evening UV will look alarmingly high.
-- **Main weather XHR has no error/timeout handler** (`index.js`) — on network
-  failure it fails silently; the AQI XHR has `onerror` but no timeout. No
-  retry happens until the next 30-minute tick.
 - **Persisted settings are keyed by auto-generated message-key IDs.**
   Reordering or inserting entries in `package.json`'s `messageKeys` array
   renumbers the keys and silently scrambles previously persisted settings.
