@@ -17,5 +17,8 @@
     non-touch platforms and when the user disables touch in Settings).
     Subscribing powers the touch sensor on (and triggers backlight per
     event), so subscribe in the window `appear` handler and unsubscribe on
-    `disappear` to limit battery cost.
-    Docs: <https://developer.repebble.com/guides/events-and-services/touch/>
+    `disappear` to limit battery cost. `TouchEvent` carries `int16_t x, y`
+    screen coordinates. Requires SDK 4.9+ (this repo's pebble-env has
+    4.9.169, so we're set).
+    Guide: <https://developer.repebble.com/guides/events-and-services/touch/>
+    API reference: <https://developer.repebble.com/docs/c/Foundation/Event_Service/TouchService/>
