@@ -25,9 +25,11 @@ fonts (`fonts_get_system_font`), which ship with the firmware (Apache 2.0).
 | [Open-Meteo Air Quality API](https://open-meteo.com/en/licence) | `src/pkjs/index.js` fetches US AQI | Same terms as above. |
 
 Open-Meteo's CC BY 4.0 attribution: include "Weather data by
-[Open-Meteo.com](https://open-meteo.com/)" near where the data is shown. For a
-watchface, putting it in the app-store description and the Clay settings page
-is the practical place.
+[Open-Meteo.com](https://open-meteo.com/)" where people encounter the work.
+Today that's the README (the settings page deliberately carries no
+about/credits section). **If Textface ever ships to the Rebble store, put the
+attribution in the store listing description** — end users don't see the
+README.
 
 ## Compatibility conclusion
 

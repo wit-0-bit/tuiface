@@ -290,31 +290,6 @@
     ]
   },
   {
-    "type": "section",
-    "items": [
-      {
-        "type": "heading",
-        "defaultValue": "About & Credits"
-      },
-      {
-        "type": "text",
-        "defaultValue": "Weather, air quality, and UV data by <a href='https://open-meteo.com/'>Open-Meteo.com</a> (CC BY 4.0)."
-      },
-      {
-        "type": "text",
-        "defaultValue": "Built with <a href='https://github.com/pebble-dev/clay'>Clay</a> (MIT) and the <a href='https://github.com/coredevices/PebbleOS'>Pebble SDK</a> (Apache 2.0), maintained by the <a href='https://rebble.io/'>Rebble</a> community. Tested with <a href='https://github.com/ThrowTheSwitch/Unity'>Unity</a> (MIT)."
-      },
-      {
-        "type": "text",
-        "defaultValue": "Developed with extensive assistance from AI coding agents: Google Gemini and Anthropic Claude."
-      },
-      {
-        "type": "text",
-        "defaultValue": "Textface is free for noncommercial use under the <a href='https://polyformproject.org/licenses/noncommercial/1.0.0'>PolyForm Noncommercial License 1.0.0</a>."
-      }
-    ]
-  },
-  {
     "type": "submit",
     "defaultValue": "Save Settings"
   }
