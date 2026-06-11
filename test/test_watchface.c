@@ -450,6 +450,25 @@ void test_update_health_info_should_read_heart_rate(void) {
   TEST_ASSERT_EQUAL_STRING("--", buf);
 }
 
+void test_handle_bluetooth_should_vibrate_only_on_disconnect_transition(void) {
+  mock_vibes_count = 0;
+
+  s_connected = true;
+  handle_bluetooth(false); // genuine drop: buzz
+  TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
+  TEST_ASSERT_FALSE(s_connected);
+
+  handle_bluetooth(false); // still disconnected (relaunch-while-away): silent
+  TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
+
+  handle_bluetooth(true); // reconnect: silent
+  TEST_ASSERT_EQUAL_INT(1, mock_vibes_count);
+  TEST_ASSERT_TRUE(s_connected);
+
+  handle_bluetooth(false); // second genuine drop: buzz again
+  TEST_ASSERT_EQUAL_INT(2, mock_vibes_count);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_to_upper_str_should_convert_lowercase_to_uppercase);
@@ -473,5 +492,6 @@ int main(void) {
   RUN_TEST(test_weather_cache_should_reject_missing_or_stale_data);
   RUN_TEST(test_weather_cache_should_keep_values_at_edge_of_window);
   RUN_TEST(test_update_health_info_should_read_heart_rate);
+  RUN_TEST(test_handle_bluetooth_should_vibrate_only_on_disconnect_transition);
   return UNITY_END();
 }

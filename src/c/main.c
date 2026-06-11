@@ -107,10 +107,13 @@ static void battery_callback(BatteryChargeState state) {
 }
 
 static void handle_bluetooth(bool connected) {
+  bool was_connected = s_connected;
   s_connected = connected;
   refresh_complications();
   if (s_canvas_layer) layer_mark_dirty(s_canvas_layer);
-  if (!connected) {
+  // Buzz only on a genuine drop, not when launched already-disconnected —
+  // otherwise every return to the watchface vibrates while the phone is away.
+  if (was_connected && !connected) {
     vibes_double_pulse();
   }
 }
@@ -204,9 +207,9 @@ static void init(void) {
   health_service_events_subscribe(health_handler, NULL);
 #endif
 
-  // Initial states
+  // Initial states (seed connection state directly — no vibe on launch)
   battery_callback(battery_state_service_peek());
-  handle_bluetooth(connection_service_peek_pebble_app_connection());
+  s_connected = connection_service_peek_pebble_app_connection();
 
   // AppMessage setup
   app_message_register_inbox_received(inbox_received_callback);

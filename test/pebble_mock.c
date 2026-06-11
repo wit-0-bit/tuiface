@@ -102,7 +102,8 @@ void text_layer_set_text_color(TextLayer *text_layer, GColor color) {}
 
 void tick_timer_service_subscribe(TimeUnits tick_units, void (*handler)(struct tm *tick_time, TimeUnits units_changed)) {}
 time_t time_start_of_today(void) { return 0; }
-void vibes_double_pulse(void) {}
+int mock_vibes_count = 0;
+void vibes_double_pulse(void) { mock_vibes_count++; }
 
 Window *window_create(void) { return NULL; }
 void window_destroy(Window *window) {}
