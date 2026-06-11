@@ -111,8 +111,13 @@ agent-written code too — follow them.
   `messageKeys`. Never reuse or renumber a `PERSIST_KEY_*` value. (Because of
   this, `messageKeys` in `package.json` is *not* order-sensitive — reordering
   it is safe.)
-- **Sidebars are hardcoded** (left = steps, right = battery) and must not
-  become configurable. See [docs/SIDEBARS.md](docs/SIDEBARS.md).
+- **Sidebars are progress bars; their source is meant to become
+  configurable.** Each renders a 0–100%/goal-progress value (never text or
+  discrete categories) in a fixed position. Today the sources are hardwired —
+  steps (left) and battery (right) — but the design intent is a selectable
+  source per side: off, steps, battery, distance-to-goal, active-minutes, or
+  any metric with a clear start and destination. Don't reintroduce a rule
+  forbidding that. See [docs/SIDEBARS.md](docs/SIDEBARS.md).
 - **New complications require Elizabeth's approval** (see Philosophy —
   proposals welcome, bar high).
 

@@ -1,20 +1,38 @@
 # Sidebar Complications Architecture
 
-This document serves as a reference for the design, purpose, and implementation details of Sidebar Complications in the Watchface.
+Reference for the design and purpose of the edge sidebars — the fill bars on
+the left and right screen edges.
 
-## Concept & Philosophy
+## Concept
 
-Sidebars are **not** positional toggles or settings for changing where complications are drawn. Instead, they are a specific category of complication suited for data sources that:
-1. Have a clearly defined, measurable range (from 0% to 100% or progress towards a daily goal).
-2. Are filled or emptied dynamically throughout the day.
+A sidebar is a **progress bar**, not a text readout. It suits any metric with
+a clear start and destination — a `0 → goal` or `0–100%` range that fills or
+empties over time. The position is fixed (one bar per edge); the source is the
+part meant to vary.
 
-### Hardcoded Sidebar Map
-- **Left Sidebar**: Hardcoded to **Steps** (progress toward the user's daily step goal).
-- **Right Sidebar**: Hardcoded to **Battery** (battery percentage from 0% to 100%).
+## Sources
 
-## Architecture Rules & Constraints
+**Today, the sources are hardwired:** steps on the left (progress toward the
+daily step goal) and battery on the right (charge from 0% to 100%). There is
+no source selection or "off" yet — `s_left_sidebar_source` and
+`s_right_sidebar_source` are set in `data.c` and never changed.
 
-To prevent feature creep or UX confusion, the following constraints must be strictly adhered to:
-1. **No Positional Toggles**: Do not add options to move, disable, or dynamically swap sidebars via the Pebble configuration page.
-2. **Design Pattern**: Sidebars represent continuous progress. Complications that are text-only or represent discrete categories (e.g., Date, AQI, UV) are not suitable for Sidebars.
-3. **Data Sources**: Only data sources that represent progress bars (e.g., Steps, Active Minutes, Battery Life) should ever be considered for Sidebars.
+**The intended direction** is a per-side selectable source: **off**, or any
+progress-type metric, e.g.:
+
+- **Steps** — progress toward the daily step goal
+- **Battery** — charge from 0% to 100%
+- **Distance** — toward a distance goal
+- **Active minutes** — toward an active-time goal
+
+Anything with a clear start and destination is fair game. Anything text-only
+or discrete (Date, AQI, UV, Bluetooth status) is **not** — those belong in the
+five main slots.
+
+## Constraints
+
+1. **Progress only.** A sidebar source must map to a `0–100%`/goal-progress
+   value. Text or discrete-category complications never go in a sidebar.
+2. **Fixed position.** There is one sidebar per edge and they do not move. The
+   only thing that should ever vary is which source fills each one (or off) —
+   never the position.
