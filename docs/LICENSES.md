@@ -9,7 +9,7 @@ and its license.
 |---|---|---|---|
 | [@rebble/clay](https://github.com/pebble-dev/clay) ^1.0.3 | npm dependency, bundled into the PebbleKit JS config page | MIT | Zero transitive runtime dependencies — the entire npm tree is this one package. |
 | [PebbleOS / Pebble SDK](https://github.com/coredevices/PebbleOS) | Build-time SDK (headers, system fonts, `wscript` build rules); the watchface links against firmware APIs on-device | Apache 2.0 | Open-sourced by Google in January 2025, now maintained by Core Devices / Rebble. |
-| [Unity test framework](https://github.com/ThrowTheSwitch/Unity) | Test-only; fetched into `test/unity/` (not committed to this repo) | MIT | Referenced by `test/Makefile`. |
+| [Unity test framework](https://github.com/ThrowTheSwitch/Unity) | Test-only; git submodule at `test/unity/` (pinned at `bbf8f37`) | MIT | Verified from `test/unity/LICENSE.txt`. Submodule contents are distributed under their own license, not this project's. |
 
 `test/pebble.h` and `test/pebble_mock.c` are hand-written mocks original to
 this project, not copies of SDK code.
