@@ -7,22 +7,15 @@ in [TODOs.md](TODOs.md).
 
 - **UV shows daily max, not current UV.** The JS requests `uv_index_max`
   (today's peak). Fine if intentional, but the label "UV" suggests current
-  conditions; evening UV will look alarmingly high.
-- **Persisted settings are keyed by auto-generated message-key IDs.**
-  Reordering or inserting entries in `package.json`'s `messageKeys` array
-  renumbers the keys and silently scrambles previously persisted settings.
-  Append-only is safe; reordering is not.
-- **`s_active_minutes` defaults to 22** (`data.c:15`) — looks like a leftover
-  test value; harmless since health data overwrites it, but `0`/`-1` would be
-  consistent with the other sentinels.
-- **Unimplemented enum values are selectable nowhere but exist in the enum**
+  conditions; evening UV will look alarmingly high. Needs a product call:
+  relabel, switch to current UV, or leave as is.
+- **Unimplemented enum values exist but are selectable nowhere**
   (`DATA_SOURCE_DAY_NAME`, `SUNRISE`, `SUNSET`, `HIGH/LOW_TEMP`,
   `UTC_OFFSET`): `get_source_label()` returns `???` and `get_source_data()`
   returns an empty string. Dormant until those TODOs are implemented.
-- **README still says the project "is configured as a watchapp"** —
-  `package.json` already sets `watchapp.watchface: true`.
 - **`fix_config.py` / `update_config.py`** are one-off config mutators in the
   repo root; candidates for deletion or a `scripts/` folder.
-- **Test coverage gap:** `messaging.c` inbox logic is untested (the mock
-  `dict_find` always returns NULL), and there are no tests for the
-  persistence round-trip.
+- **Test coverage gap:** `messaging.c`'s `inbox_received_callback()` is
+  untested (the mock `dict_find` always returns NULL); making it return
+  scripted tuples would let tests cover settings parsing and the
+  units-changed refetch path.
