@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "data.h"
+#include "messaging.h"
 #include "theme.h"
 
 // Sensor & System Data Cache
@@ -10,8 +11,9 @@ int s_sleep_seconds = -1;   // -1 indicates no data
 int s_heart_rate = 0;       // Default to 0 (displays "--" if no HRM is present)
 int s_weather_temp = -999;  // -999 indicates no data
 char s_weather_cond[16] = "--";
-int s_weather_aqi = -1;  // -1 indicates no data
-int s_weather_uv = -1;   // -1 indicates no data
+int s_weather_aqi = -1;            // -1 indicates no data
+int s_weather_uv = -1;             // -1 indicates no data
+int32_t s_weather_fetched_at = 0;  // unix time of the data's fetch; 0 = never
 int s_active_minutes = 0;
 int s_active_minutes_goal = 30;
 bool s_connected = true;
@@ -64,6 +66,59 @@ const char* get_source_label(ComplicationDataSource source) {
     default:
       return "???";
   }
+}
+
+static bool source_uses_weather(ComplicationDataSource source) {
+  switch (source) {
+    case DATA_SOURCE_WEATHER_TEMP:
+    case DATA_SOURCE_WEATHER_COND:
+    case DATA_SOURCE_WEATHER:
+    case DATA_SOURCE_AQI:
+    case DATA_SOURCE_UV:
+    case DATA_SOURCE_AQI_UV:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool source_has_data(ComplicationDataSource source) {
+  switch (source) {
+    case DATA_SOURCE_STEPS:
+      return s_step_count != -1;
+    case DATA_SOURCE_SLEEP:
+      return s_sleep_seconds != -1;
+    case DATA_SOURCE_WEATHER_TEMP:
+    case DATA_SOURCE_WEATHER:
+      return s_weather_temp != -999;
+    case DATA_SOURCE_WEATHER_COND:
+      return strcmp(s_weather_cond, "--") != 0;
+    case DATA_SOURCE_HEART_RATE:
+      return s_heart_rate > 0;
+    case DATA_SOURCE_AQI:
+      return s_weather_aqi != -1;
+    case DATA_SOURCE_UV:
+      return s_weather_uv != -1;
+    case DATA_SOURCE_AQI_UV:
+      return s_weather_aqi != -1 || s_weather_uv != -1;
+    default:
+      // Battery, date, bluetooth, active minutes always have a real value
+      return true;
+  }
+}
+
+bool weather_is_stale(void) {
+  // Never-fetched data already renders as "--"; the star is only for real
+  // values that have outlived the refresh window. A future timestamp (clock
+  // change) is treated as stale because the age can't be trusted.
+  if (s_weather_fetched_at <= 0) return false;
+  int32_t age = (int32_t)time(NULL) - s_weather_fetched_at;
+  return age < 0 || age > WEATHER_CACHE_MAX_AGE_S;
+}
+
+void get_source_label_text(ComplicationDataSource source, char* buf, int len) {
+  bool stale = source_uses_weather(source) && weather_is_stale();
+  snprintf(buf, len, "%s%s", get_source_label(source), stale ? "*" : "");
 }
 
 void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, int* percent) {

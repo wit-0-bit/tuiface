@@ -216,7 +216,8 @@ static void init(void) {
   app_message_register_inbox_dropped(inbox_dropped_callback);
   app_message_open(512, 512);
 
-  // Restore cached weather; only hit the network if the cache is stale
+  // Restore cached weather (even stale — the label gets a "*" instead of
+  // the face going blank); only hit the network if it needs refreshing
   if (!load_weather_cache()) {
     request_weather();
   }

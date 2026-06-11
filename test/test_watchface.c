@@ -20,6 +20,9 @@ void setUp(void) {
   s_heart_rate = 0;
   s_weather_temp = -999;
   strcpy(s_weather_cond, "--");
+  s_weather_aqi = -1;
+  s_weather_uv = -1;
+  s_weather_fetched_at = 0;
   s_connected = true;
 }
 
@@ -372,6 +375,7 @@ void test_weather_cache_should_round_trip_when_fresh(void) {
   strcpy(s_weather_cond, "SUN");
   s_weather_aqi = 42;
   s_weather_uv = 5;
+  s_weather_fetched_at = (int32_t)time(NULL);
   save_weather_cache();
 
   // Simulate a relaunch: globals reset to sentinels
@@ -387,16 +391,19 @@ void test_weather_cache_should_round_trip_when_fresh(void) {
   TEST_ASSERT_EQUAL_INT(5, s_weather_uv);
 }
 
-void test_weather_cache_should_reject_missing_or_stale_data(void) {
+void test_weather_cache_should_load_stale_values_but_request_refetch(void) {
   mock_persist_reset();
 
   // Nothing persisted yet
   TEST_ASSERT_FALSE(load_weather_cache());
   TEST_ASSERT_EQUAL_INT(-999, s_weather_temp);
 
-  // Persist, then age the timestamp past the 30-minute window
+  // Persist, then age the timestamp past the 30-minute window: stale values
+  // still load (old weather beats a blank face) but the caller is told to
+  // refetch and the data reads as stale
   s_weather_temp = 72;
   strcpy(s_weather_cond, "SUN");
+  s_weather_fetched_at = (int32_t)time(NULL);
   save_weather_cache();
   persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP,
                     (int32_t)time(NULL) - (WEATHER_CACHE_MAX_AGE_S + 1));
@@ -404,12 +411,114 @@ void test_weather_cache_should_reject_missing_or_stale_data(void) {
   s_weather_temp = -999;
   strcpy(s_weather_cond, "--");
   TEST_ASSERT_FALSE(load_weather_cache());
-  TEST_ASSERT_EQUAL_INT(-999, s_weather_temp);
-  TEST_ASSERT_EQUAL_STRING("--", s_weather_cond);
+  TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
+  TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
+  TEST_ASSERT_TRUE(weather_is_stale());
 
-  // A timestamp from the future (clock change) is also rejected
+  // A timestamp from the future (clock change) also triggers a refetch and
+  // counts as stale, since the age can't be trusted
   persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP, (int32_t)time(NULL) + 3600);
   TEST_ASSERT_FALSE(load_weather_cache());
+  TEST_ASSERT_TRUE(weather_is_stale());
+}
+
+void test_stale_weather_should_star_only_weather_labels(void) {
+  char buf[12];
+
+  // Fresh data: no star
+  s_weather_fetched_at = (int32_t)time(NULL);
+  get_source_label_text(DATA_SOURCE_WEATHER, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("WEATHER", buf);
+  TEST_ASSERT_FALSE(weather_is_stale());
+
+  // Stale data: every weather-derived label gains a star
+  s_weather_fetched_at = (int32_t)time(NULL) - (WEATHER_CACHE_MAX_AGE_S + 1);
+  TEST_ASSERT_TRUE(weather_is_stale());
+  get_source_label_text(DATA_SOURCE_WEATHER, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("WEATHER*", buf);
+  get_source_label_text(DATA_SOURCE_WEATHER_TEMP, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("TEMP*", buf);
+  get_source_label_text(DATA_SOURCE_WEATHER_COND, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("COND*", buf);
+  get_source_label_text(DATA_SOURCE_AQI_UV, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("AQI/UV*", buf);
+
+  // Non-weather labels never star
+  get_source_label_text(DATA_SOURCE_STEPS, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("STEP", buf);
+  get_source_label_text(DATA_SOURCE_BATTERY, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("BATT", buf);
+
+  // Never-fetched data shows "--" already; no star on top of that
+  s_weather_fetched_at = 0;
+  TEST_ASSERT_FALSE(weather_is_stale());
+  get_source_label_text(DATA_SOURCE_WEATHER, buf, sizeof(buf));
+  TEST_ASSERT_EQUAL_STRING("WEATHER", buf);
+}
+
+void test_source_has_data_should_flag_placeholder_values(void) {
+  // Sentinels: no data, so the value renders in plain theme color
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_STEPS));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_SLEEP));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_WEATHER));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_WEATHER_TEMP));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_WEATHER_COND));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_HEART_RATE));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_AQI));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_UV));
+  TEST_ASSERT_FALSE(source_has_data(DATA_SOURCE_AQI_UV));
+
+  // These always show a real value
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_BATTERY));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_BLUETOOTH));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_DATE));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_ACTIVE_MINUTES));
+
+  // Real values flip them back
+  s_step_count = 4200;
+  s_sleep_seconds = 7 * 3600;
+  s_weather_temp = 72;
+  strcpy(s_weather_cond, "SUN");
+  s_heart_rate = 65;
+  s_weather_aqi = 42;
+  s_weather_uv = 3;
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_STEPS));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_SLEEP));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_WEATHER));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_WEATHER_TEMP));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_WEATHER_COND));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_HEART_RATE));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_AQI));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_UV));
+  TEST_ASSERT_TRUE(source_has_data(DATA_SOURCE_AQI_UV));
+}
+
+void test_inbox_should_prefer_phone_reported_fetch_time(void) {
+  mock_persist_reset();
+  int32_t now = (int32_t)time(NULL);
+
+  // Phone reports an older fetch time (cached resend): trust it
+  mock_dict_reset();
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 65);
+  mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "CLD");
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_FETCHED_AT, now - 600);
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_EQUAL_INT(now - 600, s_weather_fetched_at);
+
+  // No fetch time in the payload (older phone JS): stamp arrival time
+  mock_dict_reset();
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 66);
+  mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "SUN");
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_TRUE(s_weather_fetched_at >= now);
+
+  // A reported time ahead of the watch clock is ignored (clock skew)
+  mock_dict_reset();
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 67);
+  mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "FOG");
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_FETCHED_AT, now + 3600);
+  inbox_received_callback(NULL, NULL);
+  TEST_ASSERT_TRUE(s_weather_fetched_at >= now && s_weather_fetched_at < now + 3600);
 }
 
 void test_weather_cache_should_keep_values_at_edge_of_window(void) {
@@ -624,8 +733,11 @@ int main(void) {
   RUN_TEST(test_determine_theme_should_handle_all_configurations);
   RUN_TEST(test_format_date_string_should_handle_all_configurations);
   RUN_TEST(test_weather_cache_should_round_trip_when_fresh);
-  RUN_TEST(test_weather_cache_should_reject_missing_or_stale_data);
+  RUN_TEST(test_weather_cache_should_load_stale_values_but_request_refetch);
   RUN_TEST(test_weather_cache_should_keep_values_at_edge_of_window);
+  RUN_TEST(test_stale_weather_should_star_only_weather_labels);
+  RUN_TEST(test_source_has_data_should_flag_placeholder_values);
+  RUN_TEST(test_inbox_should_prefer_phone_reported_fetch_time);
   RUN_TEST(test_settings_should_round_trip_through_persistence);
   RUN_TEST(test_settings_persistence_is_decoupled_from_message_key_ids);
   RUN_TEST(test_update_health_info_should_read_heart_rate);

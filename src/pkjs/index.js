@@ -26,6 +26,9 @@ function retryWeather(attempt, reason) {
 var UV_WINDOW_HOURS = 12;
 
 function sendWeatherDict(dict, logLabel) {
+  // Stamp when this data was fetched so the watch can flag it as stale
+  // later. Cached payloads resent on relaunch keep their original stamp.
+  dict['WEATHER_FETCHED_AT'] = Math.round(Date.now() / 1000);
   try {
     localStorage.setItem('weather-cache', JSON.stringify({payload: dict, fetchedAt: Date.now()}));
   } catch (e) {

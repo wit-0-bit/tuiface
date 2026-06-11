@@ -9,16 +9,15 @@ void save_weather_cache(void) {
   persist_write_string(PERSIST_KEY_WEATHER_COND, s_weather_cond);
   persist_write_int(PERSIST_KEY_WEATHER_AQI, s_weather_aqi);
   persist_write_int(PERSIST_KEY_WEATHER_UV, s_weather_uv);
-  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP, (int32_t)time(NULL));
+  persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP, s_weather_fetched_at);
 }
 
 bool load_weather_cache(void) {
   if (!persist_exists(PERSIST_KEY_WEATHER_TIMESTAMP)) return false;
 
-  int32_t saved_at = persist_read_int(PERSIST_KEY_WEATHER_TIMESTAMP);
-  int32_t age = (int32_t)time(NULL) - saved_at;
-  if (age < 0 || age > WEATHER_CACHE_MAX_AGE_S) return false;
-
+  // Stale values still load — old weather beats a blank face. The label
+  // gains a "*" via weather_is_stale(); the return value only tells the
+  // caller whether a refetch is needed.
   if (persist_exists(PERSIST_KEY_WEATHER_TEMP)) {
     s_weather_temp = persist_read_int(PERSIST_KEY_WEATHER_TEMP);
   }
@@ -31,7 +30,8 @@ bool load_weather_cache(void) {
   if (persist_exists(PERSIST_KEY_WEATHER_UV)) {
     s_weather_uv = persist_read_int(PERSIST_KEY_WEATHER_UV);
   }
-  return true;
+  s_weather_fetched_at = persist_read_int(PERSIST_KEY_WEATHER_TIMESTAMP);
+  return s_weather_fetched_at > 0 && !weather_is_stale();
 }
 
 void load_settings(void) {
@@ -82,8 +82,18 @@ void inbox_received_callback(DictionaryIterator* iterator, void* context) {
   }
 
   // Persist the weather cache only for a real weather payload, so a
-  // settings-only message can't refresh the timestamp.
+  // settings-only message can't refresh the timestamp. The phone reports
+  // when it actually fetched (it resends cached payloads on relaunch);
+  // trust that unless it's missing or ahead of our clock.
   if (temp_tuple && cond_tuple) {
+    s_weather_fetched_at = (int32_t)time(NULL);
+    Tuple* fetched_at_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_FETCHED_AT);
+    if (fetched_at_tuple) {
+      int32_t reported = fetched_at_tuple->value->int32;
+      if (reported > 0 && reported < s_weather_fetched_at) {
+        s_weather_fetched_at = reported;
+      }
+    }
     save_weather_cache();
   }
 

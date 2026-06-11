@@ -196,6 +196,7 @@ typedef struct {
 #define MESSAGE_KEY_SLOT_4 115
 #define MESSAGE_KEY_SLOT_5 116
 #define MESSAGE_KEY_UTC_OFFSET 117
+#define MESSAGE_KEY_WEATHER_FETCHED_AT 118
 
 // --- Function Prototypes ---
 void app_event_loop(void);

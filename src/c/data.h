@@ -27,6 +27,7 @@ extern int s_weather_temp;
 extern char s_weather_cond[16];
 extern int s_weather_aqi;
 extern int s_weather_uv;
+extern int32_t s_weather_fetched_at;
 extern int s_active_minutes;
 extern int s_active_minutes_goal;
 extern bool s_connected;
@@ -51,6 +52,9 @@ extern ComplicationSlot s_complication_slots[NUM_SLOTS];
 
 void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, int* percent);
 const char* get_source_label(ComplicationDataSource source);
+bool source_has_data(ComplicationDataSource source);
+bool weather_is_stale(void);
+void get_source_label_text(ComplicationDataSource source, char* buf, int len);
 void format_date_string(int format, struct tm* tick_time, char* buffer, int buf_size);
 void to_upper_str(char* str);
 int tuple_get_int(Tuple* tuple);

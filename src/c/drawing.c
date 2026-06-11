@@ -180,7 +180,9 @@ void canvas_update_proc(Layer* layer, GContext* ctx) {
   for (int i = 0; i < NUM_SLOTS; i++) {
     ComplicationSlot* slot = &s_complication_slots[i];
     if (slot->source != DATA_SOURCE_EMPTY) {
-      draw_ascii_window(ctx, slot->box_rect, get_source_label(slot->source));
+      char title_buf[12];  // longest label "WEATHER" + "*"
+      get_source_label_text(slot->source, title_buf, sizeof(title_buf));
+      draw_ascii_window(ctx, slot->box_rect, title_buf);
       if (slot->source == DATA_SOURCE_AQI_UV) {
         draw_aqi_uv_complication(ctx, slot->box_rect);
       }
@@ -202,7 +204,11 @@ void refresh_complications() {
         text_layer_set_text(slot->layer, s_slot_buffers[i]);
 
 #if defined(PBL_COLOR)
-        text_layer_set_text_color(slot->layer, get_source_color(slot->source));
+        // "--" placeholders render in the plain theme color; only real
+        // values get the source's accent color
+        text_layer_set_text_color(slot->layer, source_has_data(slot->source)
+                                                   ? get_source_color(slot->source)
+                                                   : s_active_theme->text_primary);
 #else
         text_layer_set_text_color(slot->layer, s_active_theme->text_primary);
 #endif

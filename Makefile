@@ -3,7 +3,7 @@
 
 FORMAT_SRCS = $(wildcard src/c/*.c src/c/*.h) \
               src/pkjs/index.js \
-              test/test_watchface.c test/pebble_mock.c test/pebble.h
+              test/test_watchface.c test/pebble_mock.c test/pebble.h test/test_pkjs.js
 
 .PHONY: format format-check test build
 
@@ -15,6 +15,7 @@ format-check:
 
 test: format-check
 	$(MAKE) -C test test
+	node test/test_pkjs.js
 
 # Requires the pebble-env virtualenv to be active.
 build: format-check
