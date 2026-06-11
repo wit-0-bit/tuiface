@@ -3,22 +3,6 @@
 Bugs and suspect behavior, ordered roughly by user impact. Feature ideas live
 in [TODOs.md](TODOs.md).
 
-## 3. Auto theme flip leaves time/date text invisible
-
-**Symptom:** If the watchface stays open across 06:00 or 18:00 in Auto theme
-(or a theme settings change arrives), the background switches but the time and
-date keep their old color — white-on-white or black-on-black.
-
-**Cause:** `text_layer_set_text_color()` for `s_time_layer` and
-`s_date_iso_layer` is only called in `main_window_load()`
-(`src/c/main.c:134,141`). `apply_theme()` updates the window background, and
-`refresh_complications()` re-colors the slot layers, but nothing re-colors the
-time/date layers. Goes unnoticed because relaunching the face (issue 1) resets
-the colors.
-
-**Fix direction:** Re-apply `s_active_theme->text_primary` to both layers in
-`update_time()` (or inside `apply_theme()`).
-
 ## 4. JS sends 0 instead of "no data" for AQI and UV
 
 **Symptom:** When the AQI fetch fails or UV is missing from the forecast

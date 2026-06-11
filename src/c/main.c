@@ -63,6 +63,12 @@ static void update_health_info() {
 void update_time() {
   apply_theme();
 
+  // The theme can flip while the face is open (Auto mode at 06:00/18:00, or a
+  // settings push); the time/date layers keep their load-time color unless
+  // re-applied here.
+  if (s_time_layer) text_layer_set_text_color(s_time_layer, s_active_theme->text_primary);
+  if (s_date_iso_layer) text_layer_set_text_color(s_date_iso_layer, s_active_theme->text_primary);
+
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
 
