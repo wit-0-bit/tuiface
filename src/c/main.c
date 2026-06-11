@@ -147,6 +147,8 @@ static void health_handler(HealthEventType event, void* context) {
 static bool s_touch_subscribed = false;
 
 static void touch_handler(const TouchEvent* event, void* context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "touch: event type=%d at %d,%d", (int)event->type, (int)event->x,
+          (int)event->y);
   if (event->type == TouchEvent_Touchdown) {
     s_secondary_time_active = true;
   } else if (event->type == TouchEvent_Liftoff) {
@@ -163,6 +165,9 @@ static void touch_handler(const TouchEvent* event, void* context) {
 void update_touch_subscription(void) {
 #if defined(PBL_TOUCH)
   bool want = (s_secondary_tz_offset_min != SECONDARY_TZ_DISABLED) && touch_service_is_enabled();
+  APP_LOG(APP_LOG_LEVEL_INFO, "touch: enabled=%d offset=%d want=%d subscribed=%d",
+          (int)touch_service_is_enabled(), s_secondary_tz_offset_min, (int)want,
+          (int)s_touch_subscribed);
   if (want && !s_touch_subscribed) {
     touch_service_subscribe(touch_handler, NULL);
     s_touch_subscribed = true;
@@ -171,6 +176,8 @@ void update_touch_subscription(void) {
     s_touch_subscribed = false;
     s_secondary_time_active = false;
   }
+#else
+  APP_LOG(APP_LOG_LEVEL_INFO, "touch: PBL_TOUCH not defined on this platform");
 #endif
 }
 
