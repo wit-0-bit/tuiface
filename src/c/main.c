@@ -188,22 +188,7 @@ static void main_window_unload(Window* window) {
 
 static void init(void) {
   // Load settings from persistent storage
-  if (persist_exists(MESSAGE_KEY_SETTINGS_THEME))
-    s_settings_theme = persist_read_int(MESSAGE_KEY_SETTINGS_THEME);
-  if (persist_exists(MESSAGE_KEY_SETTINGS_UNITS))
-    s_settings_units = persist_read_int(MESSAGE_KEY_SETTINGS_UNITS);
-  if (persist_exists(MESSAGE_KEY_SETTINGS_DATE_FORMAT))
-    s_settings_date_format = persist_read_int(MESSAGE_KEY_SETTINGS_DATE_FORMAT);
-  if (persist_exists(MESSAGE_KEY_SLOT_1))
-    s_complication_slots[0].source = persist_read_int(MESSAGE_KEY_SLOT_1);
-  if (persist_exists(MESSAGE_KEY_SLOT_2))
-    s_complication_slots[1].source = persist_read_int(MESSAGE_KEY_SLOT_2);
-  if (persist_exists(MESSAGE_KEY_SLOT_3))
-    s_complication_slots[2].source = persist_read_int(MESSAGE_KEY_SLOT_3);
-  if (persist_exists(MESSAGE_KEY_SLOT_4))
-    s_complication_slots[3].source = persist_read_int(MESSAGE_KEY_SLOT_4);
-  if (persist_exists(MESSAGE_KEY_SLOT_5))
-    s_complication_slots[4].source = persist_read_int(MESSAGE_KEY_SLOT_5);
+  load_settings();
 
   s_main_window = window_create();
   apply_theme();

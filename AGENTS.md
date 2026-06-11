@@ -110,13 +110,16 @@ from the Clay page travel the same path and are persisted on the watch.
 
 ## Hard rules
 
-- **`messageKeys` in `package.json` is append-only.** Keys are auto-numbered
-  by position and persisted settings are stored under those numbers;
-  reordering or inserting silently scrambles users' saved settings.
 - **`ComplicationDataSource` enum values are stable identifiers.** They are
   persisted and referenced as string values in `src/pkjs/config.json`. Append
   new sources before `DATA_SOURCE_EMPTY` only by adding new numbers; never
   renumber.
+- **Persistence keys are a stable on-disk format.** Settings and the weather
+  cache are stored under the hand-assigned `PERSIST_KEY_*` constants in
+  `src/c/messaging.h`, deliberately decoupled from the auto-numbered
+  `messageKeys`. Never reuse or renumber a `PERSIST_KEY_*` value. (Because of
+  this, `messageKeys` in `package.json` is *not* order-sensitive — reordering
+  it is safe.)
 - **Sidebars are hardcoded** (left = steps, right = battery) and must not
   become configurable. See [docs/SIDEBARS.md](docs/SIDEBARS.md).
 - **New complications require Elizabeth's approval** (see Philosophy —

@@ -430,6 +430,59 @@ void test_weather_cache_should_keep_values_at_edge_of_window(void) {
   TEST_ASSERT_EQUAL_STRING("RAIN", s_weather_cond);
 }
 
+void test_settings_should_round_trip_through_persistence(void) {
+  mock_persist_reset();
+
+  s_settings_theme = 2;        // Night
+  s_settings_units = 1;        // Metric
+  s_settings_date_format = 2;  // Full text
+  s_complication_slots[0].source = DATA_SOURCE_AQI;
+  s_complication_slots[4].source = DATA_SOURCE_UV;
+
+  // Persist exactly as inbox_received_callback does, via the dedicated keys.
+  persist_write_int(PERSIST_KEY_SETTINGS_THEME, s_settings_theme);
+  persist_write_int(PERSIST_KEY_SETTINGS_UNITS, s_settings_units);
+  persist_write_int(PERSIST_KEY_SETTINGS_DATE_FORMAT, s_settings_date_format);
+  persist_write_int(PERSIST_KEY_SLOT_1, s_complication_slots[0].source);
+  persist_write_int(PERSIST_KEY_SLOT_5, s_complication_slots[4].source);
+
+  // Simulate a relaunch: globals reset to defaults
+  s_settings_theme = 0;
+  s_settings_units = 0;
+  s_settings_date_format = 0;
+  s_complication_slots[0].source = DATA_SOURCE_EMPTY;
+  s_complication_slots[4].source = DATA_SOURCE_EMPTY;
+
+  load_settings();
+  TEST_ASSERT_EQUAL_INT(2, s_settings_theme);
+  TEST_ASSERT_EQUAL_INT(1, s_settings_units);
+  TEST_ASSERT_EQUAL_INT(2, s_settings_date_format);
+  TEST_ASSERT_EQUAL_INT(DATA_SOURCE_AQI, s_complication_slots[0].source);
+  TEST_ASSERT_EQUAL_INT(DATA_SOURCE_UV, s_complication_slots[4].source);
+}
+
+void test_settings_persistence_is_decoupled_from_message_key_ids(void) {
+  // Settings must load from their own PERSIST_KEY_* constants, never from the
+  // auto-generated MESSAGE_KEY_* ids. This guards against the old shortcut
+  // where reordering package.json's messageKeys would scramble saved data.
+  mock_persist_reset();
+
+  // Real saved values, under the dedicated persist keys.
+  persist_write_int(PERSIST_KEY_SETTINGS_THEME, 2);
+  persist_write_int(PERSIST_KEY_SLOT_1, DATA_SOURCE_AQI);
+
+  // Decoys under the message-key ids — load_settings must ignore these.
+  persist_write_int(MESSAGE_KEY_SETTINGS_THEME, 99);
+  persist_write_int(MESSAGE_KEY_SLOT_1, DATA_SOURCE_BATTERY);
+
+  s_settings_theme = 0;
+  s_complication_slots[0].source = DATA_SOURCE_EMPTY;
+
+  load_settings();
+  TEST_ASSERT_EQUAL_INT(2, s_settings_theme);
+  TEST_ASSERT_EQUAL_INT(DATA_SOURCE_AQI, s_complication_slots[0].source);
+}
+
 void test_update_health_info_should_read_heart_rate(void) {
   // The mock reports HR inaccessible for range queries (like real firmware),
   // so this passing proves update_health_info uses an instant query.
@@ -490,6 +543,8 @@ int main(void) {
   RUN_TEST(test_weather_cache_should_round_trip_when_fresh);
   RUN_TEST(test_weather_cache_should_reject_missing_or_stale_data);
   RUN_TEST(test_weather_cache_should_keep_values_at_edge_of_window);
+  RUN_TEST(test_settings_should_round_trip_through_persistence);
+  RUN_TEST(test_settings_persistence_is_decoupled_from_message_key_ids);
   RUN_TEST(test_update_health_info_should_read_heart_rate);
   RUN_TEST(test_handle_bluetooth_should_vibrate_only_on_disconnect_transition);
   return UNITY_END();

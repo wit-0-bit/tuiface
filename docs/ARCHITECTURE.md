@@ -132,7 +132,10 @@ platforms would require deriving these from `layer_get_bounds()`.
 | `SLOT_1`–`SLOT_5` | `ComplicationDataSource` value | Slot sources (1=top-left, 2=top-right, 3=bottom-left, 4=bottom-center, 5=bottom-right) |
 
 Clay sends values as strings; `tuple_get_int()` (`data.c`) normalizes string
-and integer tuples. All settings are persisted under their message key.
+and integer tuples. On receipt, `inbox_received_callback()` (`messaging.c`)
+persists each setting under a dedicated `PERSIST_KEY_*` constant
+(`messaging.h`), and `load_settings()` restores them on launch. These persist
+keys are hand-assigned and independent of `messageKeys` ordering.
 
 ## Testing
 
