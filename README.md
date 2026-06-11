@@ -50,11 +50,14 @@ Textface doesn't try to please everyone. It has a point of view:
 
 - **TUI-like, but legible.** The terminal aesthetic serves readability on a
   small e-paper-style screen; where the two conflict, legibility wins.
+- **High-contrast themes.** Both the day and night palettes keep text sharply
+  readable; muted, low-contrast color schemes are out of scope.
 - **Curated complications.** Ever scrolled a settings page with a hundred
   complications trying to find the three you actually care about? Textface
-  adds data sources deliberately and selectively — proposals are welcome
-  (see [CONTRIBUTING.md](CONTRIBUTING.md)), but the bar is intentionally
-  high.
+  adds data sources deliberately and selectively. You are welcome to propose
+  things — however, I'm unlikely to implement them *for you*. I might
+  implement them for *me*, if that makes any sense. Forking is always an
+  option! (See [CONTRIBUTING.md](CONTRIBUTING.md).)
 - **Utility first.** When usefulness and approachability pull in different
   directions, Textface picks useful.
 - **Minimal configuration.** Every setting has to earn its place.
@@ -62,6 +65,15 @@ Textface doesn't try to please everyone. It has a point of view:
   forking is cheap and encouraged. If your three essential complications
   aren't my three, don't settle — fork it and make it yours.
   [CONTRIBUTING.md](CONTRIBUTING.md) has notes to get you started.
+
+## A note on scope
+
+I build watchfaces for other people at work. Textface is the one I build for
+me — so I'm keeping it that way. I'm happy to take bug fixes and well-scoped
+PRs, but I'm unlikely to implement someone else's feature idea *for* them;
+turning requests into a backlog is the part of work I'm deliberately not
+recreating here. If there's something you want that I won't build, that's
+genuinely what forking is for — and I'd love to see what you make.
 
 ## Building from source
 

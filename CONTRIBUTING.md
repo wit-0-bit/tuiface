@@ -18,15 +18,12 @@ else entirely. AI agents and day-to-day conventions: see
 ## The short version
 
 - Bug fixes, test improvements, and legibility fixes: very welcome.
-- New complications: **propose before you build.** Feel free to pitch
-  anything, but know that I'm planning on being *very* selective. Watchfaces
-  with seemingly hundreds of complications make it hard to find the three you
-  give a shit about, and Textface is not going to become one of them. A "no"
-  usually means "not at the cost of the face's focus," not "bad idea."
+- New complications: I recommend proposing a complication before spending
+  significant time on it. Every complication has to justify its existence with
+  a clear use case that shines as a complication.
 - Want a complication I turned down, or a different aesthetic? **Fork it!**
-  Forking isn't the consolation prize here — it's half the plan. Textface
-  only gets to stay small and opinionated because anyone who wants something
-  different can cheaply make it. Notes below to get you going.
+  More projects should have opinions! A chorus of different perspectives on
+  what a watchface can be is an ideal outcome as far as I am concerned.
 
 ## Dev setup
 
@@ -48,59 +45,48 @@ cd test && make test
 
 ## What a good PR looks like
 
-1. **It's discussed first if it changes behavior or structure.** Open an
-   issue describing the problem and your intended approach. For pure bug
-   fixes (see [ISSUES.md](ISSUES.md) for known ones), you can skip straight
-   to the PR.
+1. **Ideally, it's discussed first if it changes behavior or structure.**
+   Open an issue describing the problem and your intended approach. Again, I
+   recommend reaching out beforehand to avoid wasted time, but I am not a
+   stickler for process here. For pure bug fixes (see [ISSUES.md](ISSUES.md)
+   for known ones), feel free to skip straight to the PR.
 2. **It comes with tests, and it's formatted.** Everything testable gets
    tested — value formatting, thresholds, theme logic. Add cases to
    `test/test_watchface.c` and register them with `RUN_TEST(...)`. Run
    `make format` before committing; `make test` (clang-format check + unit
    tests) must pass, and CI runs the same checks on every PR.
-3. **It respects the project values** in [AGENTS.md](AGENTS.md): TUI-like but
-   legible, high-contrast themes, minimal configuration, utility over
-   approachability. PRs that add settings face extra scrutiny — every option
-   has to earn its place.
+3. **It respects the project values** (see [Philosophy in the
+   README](README.md#philosophy)): TUI-like but legible, high-contrast themes,
+   minimal configuration, utility over approachability. PRs that add settings
+   face extra scrutiny — every option has to earn its place.
 4. **It follows the hard rules:**
-   - `messageKeys` in `package.json` is **append-only** (reordering scrambles
-     users' persisted settings).
    - `ComplicationDataSource` enum values are stable persisted identifiers —
-     append, never renumber.
+     append, never renumber. (Persistence keys live in
+     [`messaging.h`](src/c/messaging.h) and are independent of `messageKeys`
+     ordering, so that array is free to be reordered.)
    - The edge sidebars (steps/battery) stay hardcoded —
      [docs/SIDEBARS.md](docs/SIDEBARS.md) explains why.
 
 ## Proposing a complication
 
-Open an issue with: what data it shows, where it comes from (on-watch sensor
-vs. phone fetch), which slot sizes it fits (top slots are wide, bottom slots
-are narrow), and why you'd put it in one of *your* five slots. If it's
-approved, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#adding-a-new-complication-source)
-has the step-by-step implementation recipe.
+As I plan on being very selective about what I build/merge in, I recommend
+proposing ideas before spending significant amounts of time and resources on
+them — unless you are comfortable forking the watchface.
 
-Fair warning: I plan on being very choosy. I'm aiming to keep this watchface
-easy to develop and maintain — I'm admittedly not the best at C, so a small,
-simple codebase matters more to me than feature count. If I pass on your
-idea, forks are warmly encouraged.
+If you'd like to sound out an idea, open an issue with: what data it shows,
+where it comes from (on-watch sensor vs. phone fetch), which slot sizes it
+fits (top slots are wide, bottom slots are narrow), and why you'd put it in
+one of *your* five slots. Either way,
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#adding-a-new-complication-source)
+has the step-by-step implementation recipe when you're ready to build.
 
 ## Forking notes
 
-Forks are encouraged — seriously. A fork with your name on it, your three
-complications, and your palette is a *success* for this project, not a loss.
-You don't need permission, and you don't need to feel bad about it. If you
-build something neat, I'd love a link back, but even that's optional. When
-you fork:
-
-- **Change the `uuid` and `displayName`** in `package.json` (and ideally
-  `name`/`author`) so your build doesn't collide with installed copies of
-  Textface. Any UUID v4 generator works.
-- `targetPlatforms` controls which watches you build for; this repo currently
-  targets `emery` (Pebble Time 2), and the layout constants are hardcoded for
-  its 200x228 screen. Supporting other platforms means deriving layout from
-  `layer_get_bounds()` — a known limitation, not a design rule.
-- Weather comes from [Open-Meteo](https://open-meteo.com) with no API key; be
-  a good citizen with request frequency if you change the refresh logic.
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the map; everything else
-  follows from there.
+You don't need permission. Please just remember to **change the `uuid` and
+`displayName`** in `package.json` (and ideally `name`/`author`) so your build
+doesn't collide with installed copies of Textface. Any UUID v4 generator
+works. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the map for everything
+else.
 
 ## Orientation
 
