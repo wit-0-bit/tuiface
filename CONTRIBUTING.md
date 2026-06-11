@@ -64,12 +64,10 @@ are narrow), and why you'd put it in one of *your* five slots. If it's
 approved, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#adding-a-new-complication-source)
 has the step-by-step implementation recipe.
 
-If I shoot down a suggestion or complication, please don't take it
-personally. I just think it will be a better experience for me — as a user
-and as a maintainer — if I have an opinion about what I want this to be.
-It's not that I think I know better than you what *you* want or need; it's
-that I know what *I* want and need better than y'all do, and ultimately this
-is my watchface. If you disagree, you are encouraged to fork it.
+Fair warning: I plan on being very choosy. I'm aiming to keep this watchface
+easy to develop and maintain — I'm admittedly not the best at C, so a small,
+simple codebase matters more to me than feature count. If I pass on your
+idea, forks are warmly encouraged.
 
 ## Forking notes
 
