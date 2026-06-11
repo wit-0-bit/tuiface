@@ -1,12 +1,18 @@
 # Contributing to Textface
 
-Oh. Um. Hi! I genuinely didn't expect anyone to find this page. Give me a
-second to tidy up.
+To be honest, I didn't think anyone was going to be interested in downloading
+this watchface, let alone want to contribute to it. It seemed a bit silly to
+write a file that I fully expect nobody to read.
 
-Okay. So, in the (let's be honest, unlikely) event that you've found this
-watchface *and* want to contribute to it: welcome, and thank you! This page
-is for humans — whether you want to send a change back or take the project
-somewhere else entirely. (AI agents and day-to-day conventions: see
+That said, I think it is fairly likely that you are in fact reading this file
+right now. So, I will operate under the assumption that I am communicating to
+someone interested in contributing to this watchface. If this is not the
+case, I can only offer my sincere apologies.
+
+So, since you *are* reading this, I suppose I should set some expectations and
+conventions about how I am wanting to maintain this project. (This page is for
+humans — whether you want to send a change back or take the project somewhere
+else entirely. AI agents and day-to-day conventions: see
 [AGENTS.md](AGENTS.md).)
 
 ## The short version
