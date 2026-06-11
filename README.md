@@ -1,36 +1,94 @@
-# watchface
+# Textface
 
-A Pebble watchapp/watchface written in C using the Pebble SDK.
+An opinionated, TUI-styled watchface for Pebble. Time, date, and the data you
+care about, framed in dashed terminal-style windows — text over icons,
+contrast over decoration, utility over hand-holding.
 
-## Building & running
+![Textface screenshot](screenshot_current.png)
+
+Built for the modern Pebble lineup; currently targets **emery**
+(Pebble Time 2).
+
+## Features
+
+- **Big, legible time** in the system LECO font, with your choice of ISO-style
+  date formats (`TUE 2026-06-09`, `2026-06-09 TUE`, or `TUE JUNE 9th, 2026`).
+- **Five complication slots** (two wide on top, three below) you can fill
+  from: weather (condition + temperature), steps, sleep, heart rate, active
+  minutes, Bluetooth status, air quality (US AQI), UV index, or a combined
+  AQI/UV view — or leave empty.
+- **Edge progress bars**: the left screen edge fills as you approach your
+  daily step goal; the right edge shows battery level. These are fixed by
+  design.
+- **Day/Night themes** with automatic switching (day from 06:00, night from
+  18:00), or pin either one. Both palettes are high contrast.
+- **Color-coded values**: battery, temperature, AQI, and UV shift
+  green/yellow/red (or blue for cold) as conditions change.
+- **Weather without an API key** — data comes from
+  [Open-Meteo](https://open-meteo.com) via your phone's location, refreshed
+  every 30 minutes.
+
+## Configuration
+
+Open the watchface settings in the Pebble mobile app. Settings are
+deliberately few:
+
+| Setting | Options |
+|---------|---------|
+| Theme | Auto (day/night), Day, Night |
+| Units | Imperial, Metric |
+| Date format | Weekday + ISO, ISO + Weekday, full text |
+| Slots 1–5 | Data source per slot, or Empty |
+
+That's the whole surface. Textface favors good defaults over knobs; if a
+behavior isn't configurable, that's a decision, not an oversight.
+
+## Philosophy
+
+Textface doesn't try to please everyone. It has a point of view:
+
+- **TUI-like, but legible.** The terminal aesthetic serves readability on a
+  small e-paper-style screen; where the two conflict, legibility wins.
+- **Curated complications.** Ever scrolled a settings page with a hundred
+  complications trying to find the three you actually care about? Textface
+  adds data sources deliberately and selectively — proposals are welcome
+  (see [CONTRIBUTING.md](CONTRIBUTING.md)), but the bar is intentionally
+  high.
+- **Utility first.** When usefulness and approachability pull in different
+  directions, Textface picks useful.
+- **Minimal configuration.** Every setting has to earn its place.
+- **Fork-friendly.** Textface can afford to be this opinionated *because*
+  forking is cheap and encouraged. If your three essential complications
+  aren't my three, don't settle — fork it and make it yours.
+  [CONTRIBUTING.md](CONTRIBUTING.md) has notes to get you started.
+
+## Building from source
+
+Requires the [Pebble SDK](https://developer.repebble.com). The CLI is set up
+in a project-local virtualenv:
 
 ```sh
+source pebble-env/bin/activate
 pebble build                          # build for all targetPlatforms
-pebble install --emulator emery       # install on the emery emulator
+pebble install --emulator emery       # run on the emery emulator
 pebble install --phone <ip>           # install to a paired phone
 ```
 
-## Target platforms
+Run the unit tests (host-only, no SDK needed):
 
-`targetPlatforms` in `package.json` controls which watches you build for. The
-modern Pebble hardware is **emery** (Pebble Time 2), **gabbro** (Pebble Round
-2), and **flint** (Pebble 2 Duo); the original Pebble platforms (aplite,
-basalt, chalk, diorite) are included by default for backwards compatibility.
-
-## Project layout
-
-```
-src/c/           C source for the watchapp
-src/pkjs/        PebbleKit JS (phone-side) source, if any
-worker_src/c/    Background worker source, if any
-resources/       Images, fonts, and other bundled resources
-package.json     Project metadata (UUID, platforms, resources, message keys)
-wscript          Build rules — usually no need to edit
+```sh
+cd test && make test
 ```
 
-By default this project is configured as a watchapp. To make it a watchface,
-set `pebble.watchapp.watchface` to `true` in `package.json`.
+## Development
 
-## Documentation
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute or fork, and what
+  gets accepted
+- [AGENTS.md](AGENTS.md) — project values, conventions, and hard rules for
+  contributors and AI agents
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how it all works: data flow,
+  modules, the complication system, theming, testing
+- [docs/SIDEBARS.md](docs/SIDEBARS.md) — why the edge bars are fixed
+- [ISSUES.md](ISSUES.md) — known bugs · [TODOs.md](TODOs.md) — planned ideas
 
 Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>

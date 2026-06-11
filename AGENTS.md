@@ -1,13 +1,120 @@
-# LLM Agent Guidelines
+# AGENTS.md
 
-This project is developed in partnership with AI agents.
+Working notes for AI agents (and new contributors) on **Textface**, an
+opinionated Pebble watchface. Read this first; deeper material is linked
+throughout.
 
-### Core Philosophy: Partnership over Automation
-I view you as a **partner** in the development process, not just a really fast way of typing or executing commands. 
+## Philosophy & goals
 
-### Communication Expectations
-- **Discuss First:** When structural decisions, architectural changes, or trade-offs arise, communicate with me. Do not execute destructive or highly opinionated commands (like wiping directories or making assumptions about Git workflows) without checking in first.
-- **Explain Your Reasoning:** Share *why* you are suggesting a specific approach.
-- **Collaborate:** If I ask a question ("Is this the correct way?"), answer the question directly and offer your perspective *before* executing a solution. 
-- **Course Correction:** If I'm frustrated, acknowledge the communication breakdown. We are working together to build a clean, maintainable project.
-- **Exhaustive Testing:** All code must be tested as is practically possible. When implementing new features or refactoring, unit tests should be written, expanded, and executed to prove the logic holds up.
+These are project values, not suggestions. When a change conflicts with them,
+the change is wrong.
+
+- **Textface has an opinion.** It cannot please everyone and we don't try.
+  "Add an option for it" is not the default answer — prefer choosing the right
+  behavior over making behavior configurable.
+- **Complications are curated, hard.** Proposals are welcome — but Elizabeth
+  Winn approves every complication personally and plans to be *very*
+  selective. Watchfaces offering hundreds of complications bury the three you
+  actually care about; Textface won't become one. Propose first, don't
+  implement speculatively, and don't take a "no" as a verdict on the idea —
+  it's usually about protecting focus.
+- **Forking is encouraged.** The strict curation above only works because
+  forking is the sanctioned escape hatch. When someone wants a feature that
+  doesn't fit Textface, pointing them at a fork (see
+  [CONTRIBUTING.md](CONTRIBUTING.md)) is a good outcome, not a brush-off.
+- **TUI-like, but legible.** The aesthetic is a terminal UI — dashed borders,
+  monospace-feeling layouts, text over icons. If a TUI flourish hurts
+  legibility on the watch, legibility wins.
+- **Everything is tested.** New logic comes with unit tests, expanded and run
+  to prove it holds up. Pure logic (formatting, thresholds, theme selection)
+  belongs in testable modules, not inline in UI code.
+- **Configuration stays simple.** Every setting must justify its existence.
+  Fewer, better defaults beat option sprawl.
+- **Themes are high contrast.** Day and night palettes must keep text sharply
+  readable; muted/low-contrast color schemes are out of scope.
+- **Utility over approachability.** When the two conflict, pick the version
+  that's more useful to a committed user, even if it's less friendly at first
+  glance.
+
+## Build, run, test
+
+The Pebble CLI lives in the project-local virtualenv:
+
+```sh
+source pebble-env/bin/activate
+pebble build                          # build for all targetPlatforms
+pebble install --emulator emery       # run on the emery emulator
+pebble install --phone <ip>           # install to a paired phone
+```
+
+Unit tests run on the host — no SDK or emulator needed:
+
+```sh
+cd test && make test
+```
+
+Run the tests after any change to `src/c/`. The emulator has no real health
+data (steps/sleep/HR) and no phone weather unless the JS side runs, so logic
+verification happens in the unit tests, visual verification in the emulator.
+
+## Architecture
+
+Full tour: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Sidebar design rules:
+[docs/SIDEBARS.md](docs/SIDEBARS.md). The short version:
+
+| Path | Role |
+|------|------|
+| `src/c/main.c` | Lifecycle: window, layers, service subscriptions, settings load |
+| `src/c/data.c`/`.h` | All state (globals), `ComplicationDataSource` enum, formatters |
+| `src/c/theme.c`/`.h` | Day/night palettes, theme selection, per-source colors |
+| `src/c/drawing.c`/`.h` | Canvas rendering: ASCII windows, sidebars, slot refresh |
+| `src/c/messaging.c`/`.h` | AppMessage: weather requests, inbox parsing, persistence |
+| `src/pkjs/index.js` | Phone side: Clay config, geolocation, Open-Meteo fetches |
+| `src/pkjs/config.json` | Clay settings page definition |
+| `test/` | Unity-based host tests with a hand-written Pebble SDK mock |
+
+Data flows phone → watch over AppMessage: the watch sends a trigger message,
+JS fetches weather/AQI/UV from Open-Meteo and replies with one dictionary;
+`inbox_received_callback()` updates the `data.c` globals and redraws. Settings
+from the Clay page travel the same path and are persisted on the watch.
+
+## Conventions
+
+- State is `s_`-prefixed globals declared in `data.h`, defined in `data.c`.
+  No accessor layer — idiomatic for Pebble C.
+- "No data" sentinels: `-1` (steps, sleep, AQI, UV), `-999` (temperature),
+  `0` (heart rate). Formatters render sentinels as `--`.
+- Never hardcode colors in drawing code; always read from `s_active_theme`.
+- State changes call `refresh_complications()` and mark the canvas dirty
+  rather than drawing directly.
+- Layout constants are hardcoded for emery (200x228). The only current target
+  platform is emery.
+- Tests `#include` the C sources directly (with `TEST_ENV` defined) so static
+  functions are testable. Add new tests in `test/test_watchface.c` and
+  register them with `RUN_TEST(...)` in its `main()`.
+
+## Hard rules
+
+- **`messageKeys` in `package.json` is append-only.** Keys are auto-numbered
+  by position and persisted settings are stored under those numbers;
+  reordering or inserting silently scrambles users' saved settings.
+- **`ComplicationDataSource` enum values are stable identifiers.** They are
+  persisted and referenced as string values in `src/pkjs/config.json`. Append
+  new sources before `DATA_SOURCE_EMPTY` only by adding new numbers; never
+  renumber.
+- **Sidebars are hardcoded** (left = steps, right = battery) and must not
+  become configurable. See [docs/SIDEBARS.md](docs/SIDEBARS.md).
+- **New complications require Elizabeth's approval** (see Philosophy —
+  proposals welcome, bar high).
+
+## Adding a complication (once approved)
+
+The step-by-step recipe is in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#adding-a-new-complication-source):
+enum value → label/data/color cases → Clay options → (if phone-sourced)
+message key + JS fetch + inbox parsing → unit tests.
+
+## Project tracking
+
+- [ISSUES.md](ISSUES.md) — known bugs and suspect behavior.
+- [TODOs.md](TODOs.md) — future complication and interaction ideas.
