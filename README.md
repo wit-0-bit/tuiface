@@ -1,10 +1,10 @@
-# Textface
+# tuiface
 
 An opinionated, TUI-styled watchface for Pebble. Time, date, and the data you
 care about, framed in dashed terminal-style windows — text over icons,
 contrast over decoration, utility over hand-holding.
 
-![Textface screenshot](screenshot_current.png)
+![tuiface screenshot](screenshot_current.png)
 
 Built for the modern Pebble lineup; currently targets **emery**
 (Pebble Time 2).
@@ -41,34 +41,41 @@ deliberately few:
 | Date format | Weekday + ISO, ISO + Weekday, full text |
 | Slots 1–5 | Data source per slot, or Empty |
 
-That's the whole surface. Textface favors good defaults over knobs; if a
+That's the whole surface. tuiface favors good defaults over knobs; if a
 behavior isn't configurable, that's a decision, not an oversight.
 
 ## Philosophy
 
-Textface doesn't try to please everyone. It has a point of view:
+Inspired by various terminal watchfaces. I've always liked the idea, but they
+always had a few shortcomings for me. Most mimic a shell calling single-value
+scripts or commands, which always struck me as a missed opportunity. Terminal
+UIs don't need to be hard to scan at a glance. They can be quite legible,
+dare I say aesthetically pleasing. tuiface is my attempt at the legible part;
+you can judge the aesthetics yourself.
+
+tuiface doesn't try to please everyone. It has a point of view:
 
 - **TUI-like, but legible.** The terminal aesthetic serves readability on a
   small e-paper-style screen; where the two conflict, legibility wins.
 - **High-contrast themes.** Both the day and night palettes keep text sharply
   readable; muted, low-contrast color schemes are out of scope.
 - **Curated complications.** Ever scrolled a settings page with a hundred
-  complications trying to find the three you actually care about? Textface
+  complications trying to find the three you actually care about? tuiface
   adds data sources deliberately and selectively. You are welcome to propose
   things — however, I'm unlikely to implement them *for you*. I might
   implement them for *me*, if that makes any sense. Forking is always an
   option! (See [CONTRIBUTING.md](CONTRIBUTING.md).)
 - **Utility first.** When usefulness and approachability pull in different
-  directions, Textface picks useful.
+  directions, tuiface picks useful.
 - **Minimal configuration.** Every setting has to earn its place.
-- **Fork-friendly.** Textface can afford to be this opinionated *because*
+- **Fork-friendly.** tuiface can afford to be this opinionated *because*
   forking is cheap and encouraged. If your three essential complications
   aren't my three, don't settle — fork it and make it yours.
   [CONTRIBUTING.md](CONTRIBUTING.md) has notes to get you started.
 
 ## A note on scope
 
-I build watchfaces for other people at work. Textface is the one I build for
+I build watchfaces for other people at work. tuiface is the one I build for
 me — so I'm keeping it that way. I'm happy to take bug fixes and well-scoped
 PRs, but I'm unlikely to implement someone else's feature idea *for* them;
 turning requests into a backlog is the part of work I'm deliberately not
@@ -109,12 +116,12 @@ Full SDK docs, tutorials, and API reference: <https://developer.repebble.com>
 
 ## AI disclosure
 
-Textface was developed with extensive assistance from AI coding agents —
-Google's **Gemini** and Anthropic's **Claude** — under human direction and
-review. This includes code, tests, and documentation.
+tuiface was developed with assistance from AI coding agents — Google's
+**Gemini** and Anthropic's **Claude** — under human direction and review.
+This includes code, tests, and documentation.
 
-If you'd rather not use a watchface built with this much AI involvement,
-that's completely fair — no hard feelings.
+If you'd rather not use a watchface built with AI assistance, that's
+completely fair — no hard feelings.
 
 ## License
 

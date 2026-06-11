@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Textface** is a Pebble watchface (SDK 3, currently targeting the `emery`
+**tuiface** is a Pebble watchface (SDK 3, currently targeting the `emery`
 platform / Pebble Time 2, 200x228 px) with a text-forward design: the time and
 date sit inside dashed "ASCII window" frames, surrounded by configurable
 complication slots and two hardcoded progress-bar sidebars.
@@ -23,8 +23,9 @@ This document explains how the pieces fit together. See
 ```
 
 1. The watch requests weather by sending an AppMessage containing
-   `WEATHER_TEMP` (`request_weather()` in `messaging.c`) — on launch and every
-   30 minutes (`update_time()` in `main.c`).
+   `WEATHER_TEMP` (`request_weather()` in `messaging.c`) — on launch when the
+   persisted cache is stale (`init()` in `main.c`) and at every :00/:30
+   minute tick (`update_time()` in `main.c`).
 2. The JS side (`index.js`) receives any AppMessage, gets the phone's location,
    and calls two Open-Meteo endpoints: the forecast API (current temperature,
    weather code, and hourly UV — reduced to the peak over the next 12 hours)

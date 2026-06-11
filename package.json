@@ -1,5 +1,5 @@
 {
-  "name": "textface",
+  "name": "tuiface",
   "author": "Elizardbeth",
   "version": "1.0.1",
   "license": "PolyForm-Noncommercial-1.0.0",
@@ -9,7 +9,7 @@
     "@rebble/clay": "^1.0.3"
   },
   "pebble": {
-    "displayName": "Textface",
+    "displayName": "tuiface",
     "uuid": "a4bfc6a1-5c48-431f-b996-03b83f2ca653",
     "sdkVersion": "3",
     "enableMultiJS": true,
