@@ -5,10 +5,6 @@ in [TODOs.md](TODOs.md).
 
 ## Minor / housekeeping
 
-- **UV shows daily max, not current UV.** The JS requests `uv_index_max`
-  (today's peak). Fine if intentional, but the label "UV" suggests current
-  conditions; evening UV will look alarmingly high. Needs a product call:
-  relabel, switch to current UV, or leave as is.
 - **Unimplemented enum values exist but are selectable nowhere**
   (`DATA_SOURCE_DAY_NAME`, `SUNRISE`, `SUNSET`, `HIGH/LOW_TEMP`,
   `UTC_OFFSET`): `get_source_label()` returns `???` and `get_source_data()`

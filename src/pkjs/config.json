@@ -110,11 +110,11 @@
             "value": "16"
           },
           {
-            "label": "UV Index",
+            "label": "UV Index (next 12h max)",
             "value": "17"
           },
           {
-            "label": "AQI / UV Index",
+            "label": "AQI / UV Index (next 12h max)",
             "value": "18"
           }
         ]
@@ -158,11 +158,11 @@
             "value": "16"
           },
           {
-            "label": "UV Index",
+            "label": "UV Index (next 12h max)",
             "value": "17"
           },
           {
-            "label": "AQI / UV Index",
+            "label": "AQI / UV Index (next 12h max)",
             "value": "18"
           }
         ]
@@ -202,7 +202,7 @@
             "value": "16"
           },
           {
-            "label": "UV Index",
+            "label": "UV Index (next 12h max)",
             "value": "17"
           }
         ]
@@ -242,7 +242,7 @@
             "value": "16"
           },
           {
-            "label": "UV Index",
+            "label": "UV Index (next 12h max)",
             "value": "17"
           }
         ]
@@ -282,7 +282,7 @@
             "value": "16"
           },
           {
-            "label": "UV Index",
+            "label": "UV Index (next 12h max)",
             "value": "17"
           }
         ]

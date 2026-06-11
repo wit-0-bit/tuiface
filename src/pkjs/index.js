@@ -4,6 +4,11 @@ var clay = new Clay(clayConfig);
 
 var WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
+// The UV complication shows the peak over the coming window, not a calendar
+// day max (which is mostly about the past by evening) and not the instant
+// value (which reads 0 whenever the sun is low).
+var UV_WINDOW_HOURS = 12;
+
 function sendWeatherDict(dict, logLabel) {
   try {
     localStorage.setItem('weather-cache', JSON.stringify({ payload: dict, fetchedAt: Date.now() }));
@@ -67,7 +72,7 @@ function getWeather() {
       var units = settings['SETTINGS_UNITS'] || '0';
       var tempUnit = (units === '1' || units === 1) ? 'celsius' : 'fahrenheit';
 
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&timezone=auto&temperature_unit=' + tempUnit + '&daily=uv_index_max';
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&timezone=auto&temperature_unit=' + tempUnit + '&hourly=uv_index&forecast_hours=' + UV_WINDOW_HOURS;
 
       var xhr = new XMLHttpRequest();
       xhr.onload = function () {
@@ -76,10 +81,22 @@ function getWeather() {
             var json = JSON.parse(this.responseText);
             var temp = Math.round(json.current_weather.temperature);
             var code = json.current_weather.weathercode;
-            // -1 is the watch-side "no data" sentinel (renders as "--")
+            // -1 is the watch-side "no data" sentinel (renders as "--").
+            // forecast_hours already windows the hourly data to the next
+            // UV_WINDOW_HOURS starting at the current hour; the timestamp
+            // guard keeps us honest if the API ever returns a wider range.
             var uv = -1;
-            if (json.daily && json.daily.uv_index_max && json.daily.uv_index_max.length > 0) {
-              uv = Math.round(json.daily.uv_index_max[0]);
+            if (json.hourly && json.hourly.uv_index && json.hourly.time) {
+              var windowStart = Date.now() - 3600 * 1000; // include the in-progress hour
+              var windowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
+              for (var i = 0; i < json.hourly.uv_index.length; i++) {
+                var v = json.hourly.uv_index[i];
+                var t = new Date(json.hourly.time[i]).getTime();
+                if (typeof v === 'number' && t >= windowStart && t <= windowEnd && v > uv) {
+                  uv = v;
+                }
+              }
+              if (uv >= 0) uv = Math.round(uv);
             }
             
             var cond = "SUN";

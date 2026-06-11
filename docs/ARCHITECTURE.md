@@ -27,7 +27,8 @@ This document explains how the pieces fit together. See
    30 minutes (`update_time()` in `main.c`).
 2. The JS side (`index.js`) receives any AppMessage, gets the phone's location,
    and calls two Open-Meteo endpoints: the forecast API (current temperature,
-   weather code, daily max UV) and the air-quality API (US AQI). It maps the
+   weather code, and hourly UV — reduced to the peak over the next 12 hours)
+   and the air-quality API (US AQI). It maps the
    WMO weather code to a short condition string (`SUN`, `CLD`, `FOG`, `RAIN`,
    `SNOW`, `TSTM`) and sends everything back in one dictionary.
 3. `inbox_received_callback()` (`messaging.c`) writes the values into the

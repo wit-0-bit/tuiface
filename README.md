@@ -15,8 +15,9 @@ Built for the modern Pebble lineup; currently targets **emery**
   date formats (`TUE 2026-06-09`, `2026-06-09 TUE`, or `TUE JUNE 9th, 2026`).
 - **Five complication slots** (two wide on top, three below) you can fill
   from: weather (condition + temperature), steps, sleep, heart rate, active
-  minutes, Bluetooth status, air quality (US AQI), UV index, or a combined
-  AQI/UV view — or leave empty.
+  minutes, Bluetooth status, air quality (US AQI), UV index (the peak over
+  the next 12 hours — what's coming, not what already happened), or a
+  combined AQI/UV view — or leave empty.
 - **Edge progress bars**: the left screen edge fills as you approach your
   daily step goal; the right edge shows battery level. These are fixed by
   design.
