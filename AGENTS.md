@@ -95,18 +95,9 @@ from the Clay page travel the same path and are persisted on the watch.
 
 ## Conventions
 
-- State is `s_`-prefixed globals declared in `data.h`, defined in `data.c`.
-  No accessor layer — idiomatic for Pebble C.
-- "No data" sentinels: `-1` (steps, sleep, AQI, UV), `-999` (temperature),
-  `0` (heart rate). Formatters render sentinels as `--`.
-- Never hardcode colors in drawing code; always read from `s_active_theme`.
-- State changes call `refresh_complications()` and mark the canvas dirty
-  rather than drawing directly.
-- Layout constants are hardcoded for emery (200x228). The only current target
-  platform is emery.
-- Tests `#include` the C sources directly (with `TEST_ENV` defined) so static
-  functions are testable. Add new tests in `test/test_watchface.c` and
-  register them with `RUN_TEST(...)` in its `main()`.
+Coding conventions (state globals, sentinels, theming, canvas refresh, test
+layout) live in [CONTRIBUTING.md](CONTRIBUTING.md#conventions). They apply to
+agent-written code too — follow them.
 
 ## Hard rules
 

@@ -95,10 +95,10 @@ cd test && make test
 
 ## Development
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute or fork, and what
-  gets accepted
-- [AGENTS.md](AGENTS.md) — project values, conventions, and hard rules for
-  contributors and AI agents
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute or fork, plus the
+  coding conventions
+- [AGENTS.md](AGENTS.md) — orientation for AI agents: build/test workflow,
+  architecture, and the hard rules
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how it all works: data flow,
   modules, the complication system, theming, testing
 - [docs/SIDEBARS.md](docs/SIDEBARS.md) — why the edge bars are fixed
