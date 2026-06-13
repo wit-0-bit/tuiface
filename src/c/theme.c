@@ -23,7 +23,7 @@ const WatchTheme s_theme_day = {.center_bg = GColorWhite,
                                 .sidebar_bg = GColorWhite,
                                 .steps_fill = GColorBlue,
                                 .battery_fill_high = GColorGreen,
-                                .battery_fill_med = GColorYellow,
+                                .battery_fill_med = GColorLimerick,
                                 .battery_fill_low = GColorRed,
                                 .dividers = GColorLightGray,
                                 .text_primary = GColorBlack,
@@ -31,7 +31,7 @@ const WatchTheme s_theme_day = {.center_bg = GColorWhite,
                                 .sidebar_text_unfilled = GColorBlack,
                                 .sidebar_text_filled = GColorWhite,
                                 .status_green = GColorGreen,
-                                .status_yellow = GColorYellow,
+                                .status_yellow = GColorLimerick,
                                 .status_red = GColorRed};
 
 const WatchTheme* determine_theme(int theme_setting, int current_hour) {
